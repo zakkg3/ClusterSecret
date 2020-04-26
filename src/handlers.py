@@ -1,22 +1,10 @@
 import kopf
-# import kubernetes.client
 import re
 import yaml
-# import hpc_redmine
-# import redminer
-# import os
-
+from kubernetes import client, watch, config
 
 @kopf.on.create('clustersecret.io', 'v1', 'clustersecret')
 def create_fn(spec,logger=None,body=None,**kwargs):
-    # logger.debug("========= printing kwargs ========")
-    # logger.debug(kwargs)
-    # logger.debug("========= printing body =========")
-    # logger.debug(body)
-
-    #logger.debug("========= issues_config =========")
-    # del issues_config[project]  DELETEd from obj.
-    # del issues_config[]
     logger.debug (spec)
     
     try:
@@ -28,7 +16,20 @@ def create_fn(spec,logger=None,body=None,**kwargs):
     try:
         avoid = body.get('avoidNamespaces')
     except KeyError:
-        avoid = '*'
-        logger.debug("matching all namespaces.")
-
+        avoid = ''
+        logger.debug("not avoiding namespaces")
+    
+    sync_secret(name,matchNamespace,avoidNamespaces)
     return True
+
+
+
+
+def sync_secret(name,matchNamespace,avoidNamespaces):
+    # config.load_kube_config()
+    v1 = client.CoreV1Api()
+    nss = v1.list_namespace()
+    
+    for ns in nss.items():
+        print (ns.metadata.name)   
+    
