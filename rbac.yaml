@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: "clustersecret"
+  name: clustersecret-account
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: clustersecret-role-cluster
+rules:
+
+  # Framework: knowing which other operators are running (i.e. peering).
+  - apiGroups: [clustersecret.io]
+    resources: [clustersecret]
+    verbs: [list, watch, patch, get]
+  - apiGroups: [clustersecret.io]
+    resources: [customresourcedefinitions]
+    verbs: [list, get]
+
+  # Application: read-only access for watching cluster-wide.
+  - apiGroups: [clustersecret.io]
+    resources: [clustersecret]
+    verbs: [list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  namespace: "clustersecret"
+  name: clustersecret-role-namespaced
+rules:
+
+  # Framework: knowing which other operators are running (i.e. peering).
+  - apiGroups: [clustersecret.io]
+    resources: [kopfpeerings]
+    verbs: [list, watch, patch, get]
+
+  # Framework: posting the events about the handlers progress/errors.
+  - apiGroups: [events.k8s.io]
+    resources: [events]
+    verbs: [create]
+  - apiGroups: [""]
+    resources: [events]
+    verbs: [create]
+
+  # Application: watching & handling for the custom resource we declare.
+  - apiGroups: [clustersecret.io]
+    resources: [redmineissues]
+    verbs: [list, watch, patch]
+
+  # Application: other resources it produces and manipulates.
+  # Here, we create Jobs+PVCs+Pods, but we do not patch/update/delete them ever.
+  - apiGroups: [batch, extensions]
+    resources: [jobs]
+    verbs: [create]
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [create]
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: clustersecret-rolebinding-cluster
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: clustersecret-role-cluster
+subjects:
+  - kind: ServiceAccount
+    name: clustersecret-account
+    namespace: "clustersecret"
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  namespace: "clustersecret"
+  name: clustersecret-rolebinding-namespaced
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: clustersecret-role-namespaced
+subjects:
+  - kind: ServiceAccount
+    name: clustersecret-account
