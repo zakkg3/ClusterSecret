@@ -28,3 +28,20 @@ Any change on the secret will be replicated to all the matching namespaces
 
 https://github.com/kubernetes/kubernetes/issues/70147
 https://github.com/kubernetes/kubernetes/issues/62153
+
+
+
+#dev:
+
+## delete pod to restart all:
+
+```
+k delete pod -n clustersecret  $(k get pods -n clustersecret -o jsonpath='{.items[*].metadata.name}')
+```
+
+
+## logs
+
+```
+k logs -n clustersecret  $(k get pods -n clustersecret -o jsonpath='{.items[*].metadata.name}')
+```
