@@ -1,0 +1,24 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clustersecret
+  labels:
+    app: clustersecret
+spec:
+    matchLabels:
+    selector:
+      matchLabels:
+        app: clustersecret
+    template:
+      metadata:
+        labels:
+          app: clustersecret
+      spec:
+        serviceAccountName: clustersecret-account
+        # imagePullSecrets:
+        # - name: regcred
+        containers:
+        - name: clustersecret
+          image: flag5/clustersecret:latest
+          imagePullPolicy: Always
