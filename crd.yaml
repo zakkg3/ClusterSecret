@@ -11,9 +11,9 @@ spec:
       served: true
       storage: true
   names:
-    kind: RedmineIssue
-    plural: redmineissues
-    singular: redmineissue
+    kind: clustersecret
+    plural: clustersecrets
+    singular: clustersecret
     shortNames:
       - cs
   # additionalPrinterColumns:
