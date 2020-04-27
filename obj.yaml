@@ -1,0 +1,17 @@
+# A demo custom resource for the Kopf example operators.
+apiVersion: clustersecret.io/v1
+kind: ClusterSecret
+metadata:
+  name: global-secret
+  labels:
+    somelabel: somevalue
+  annotations:
+    someannotation: somevalue
+matchNamespace:
+  - prefix_ns-*
+  - anothernamespace
+avoidNamespaces:
+  - supersecret-ns
+data:
+  tls.crt: 123456
+  tls.key: 7891011212
