@@ -69,7 +69,5 @@ data:
  
  
 # to-do:
-
- - on change, re-sync. (patch/update) (comming soon)
  - allow to pass annotations.
  
