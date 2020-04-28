@@ -44,7 +44,6 @@ def create_fn(spec,logger=None,body=None,**kwargs):
     #sync in all matched NS
     for ns in matchedns:
         create_secret(v1,logger,ns,name,data)
-        
     return True
 
 
@@ -83,9 +82,9 @@ def create_secret(v1,logger,namespace,name,data):
     try:
         api_response = v1.create_namespaced_secret(namespace, body)
     except client.rest.ApiException as e:
-        logger.error(f'Can not create a secret with data: {data}')
+        logger.error(f'Can not create a secret, it is base64 encoded? data: {data}')
         return 1
     
-    logger.debug(f"Api response: {api_response}")
-    return api_response
+    # logger.debug(f"Api response: {api_response}")
+    return 0
                 
