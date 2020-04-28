@@ -69,7 +69,7 @@ def get_ns_list(v1,logger,matchNamespace,avoidNamespaces):
         if ns in avoidedns:
             matchedns.remove(ns)
     
-    logger.info(f'Going to sync with Namespaces: {matchedns}')
+    logger.info(f'Syncing with Namespaces: {matchedns}')
     return matchedns
     
             
