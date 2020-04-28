@@ -10,8 +10,10 @@ metadata:
 matchNamespace:
   - prefix_ns-*
   - anothernamespace
+  - cluster*
 avoidNamespaces:
   - supersecret-ns
+  - default
 data:
-  tls.crt: 123456
-  tls.key: 7891011212
+  tls.crt: MTIzNDU2Cg==
+  tls.key: Nzg5MTAxMTIxMgo=
