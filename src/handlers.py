@@ -4,12 +4,7 @@ from kubernetes import client, config
 
 @kopf.on.create('clustersecret.io', 'v1', 'clustersecrets')
 def create_fn(spec,logger=None,body=None,**kwargs):
-    # logger.debug (f'spec: {spec}')
-    # logger.debug ('----------')
-    # logger.debug (f'body: {body}')
-    # logger.debug ('###################')
-    # logger.debug (f"name: {body['metadata']['name']}")
-    
+
     try:
         matchNamespace = body.get('matchNamespace')
     except KeyError:
@@ -74,7 +69,6 @@ def get_ns_list(v1,logger,matchNamespace,avoidNamespaces):
             
 def create_secret(v1,logger,namespace,name,data):
     metadata = {'name': name, 'namespace': namespace}
-    # data=  {'tls.crt': '###BASE64 encoded crt###', 'tls.key': '###BASE64 encoded Key###'}
     api_version = 'v1'
     kind = 'Secret'
     body = client.V1Secret(api_version, data , kind, metadata, type='kubernetes.io/tls')
@@ -83,7 +77,5 @@ def create_secret(v1,logger,namespace,name,data):
     except client.rest.ApiException as e:
         logger.error(f'Can not create a secret, it is base64 encoded? data: {data}')
         return 1
-    
-    # logger.debug(f"Api response: {api_response}")
     return 0
                 
