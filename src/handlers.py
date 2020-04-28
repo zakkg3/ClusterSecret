@@ -1,7 +1,6 @@
 import kopf
 import re
-# import yaml
-from kubernetes import client, watch, config
+from kubernetes import client, config
 
 @kopf.on.create('clustersecret.io', 'v1', 'clustersecrets')
 def create_fn(spec,logger=None,body=None,**kwargs):
@@ -69,7 +68,7 @@ def get_ns_list(v1,logger,matchNamespace,avoidNamespaces):
         if ns in avoidedns:
             matchedns.remove(ns)
     
-    logger.info(f'Syncing with Namespaces: {matchedns}')
+    logger.info(f'Syncing on Namespaces: {matchedns}')
     return matchedns
     
             
