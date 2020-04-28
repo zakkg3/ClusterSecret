@@ -76,6 +76,7 @@ def create_secret(v1,logger,namespace,name,data):
         api_response = v1.create_namespaced_secret(namespace, body)
     except client.rest.ApiException as e:
         logger.error(f'Can not create a secret, it is base64 encoded? data: {data}')
+        logger.error(f'Kube exception {e}')
         return 1
     return 0
                 
