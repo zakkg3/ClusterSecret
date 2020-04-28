@@ -49,13 +49,13 @@ rules:
     verbs: [list, watch, patch]
 
   # Application: other resources it produces and manipulates.
-  # Here, we create Jobs+PVCs+Pods, but we do not patch/update/delete them ever.
+  # Here, we create secrets, but we do not delete them ever.
   - apiGroups: [batch, extensions]
     resources: [jobs]
     verbs: [create]
   - apiGroups: [""]
-    resources: [pods]
-    verbs: [create]
+    resources: [secrets]
+    verbs: [create,update,patch]
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
