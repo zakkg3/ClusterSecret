@@ -24,8 +24,8 @@ Any change on the secret will be replicated to all the matching namespaces
 
 Inspired in:
 
-https://github.com/kubernetes/kubernetes/issues/70147
-https://github.com/kubernetes/kubernetes/issues/62153
+ - https://github.com/kubernetes/kubernetes/issues/70147
+ - https://github.com/kubernetes/kubernetes/issues/62153
 
 Use it for certificates, registry pulling credentials and so on.
 
