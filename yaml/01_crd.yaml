@@ -15,7 +15,7 @@ spec:
     plural: clustersecrets
     singular: clustersecret
     shortNames:
-      - cs
+      - csec
   # additionalPrinterColumns:
   #   - name: ID
   #     type: integer
