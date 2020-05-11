@@ -9,7 +9,11 @@ def on_delete(spec,body,name,logger=None, **_):
     v1 = client.CoreV1Api()
     for ns in syncedns:
         logger.info(f'deleting secret {name} from naespace {ns}')
-        v1.delete_namespaced_secret(name,ns)
+        try:
+            v1.delete_namespaced_secret(name,ns)
+        except client.rest.ApiException as e:
+            logger.error(f"Something failed trying to delete the secret {e}")
+            
         
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='data')
 def on_field_data(old, new, body,name,logger=None, **_):
@@ -22,7 +26,7 @@ def on_field_data(old, new, body,name,logger=None, **_):
         api_version = 'v1'
         kind = 'Secret'
         data = new
-        body = client.V1Secret(api_version, data , kind, metadata, type='kubernetes.io/tls')
+        body = client.V1Secret(api_version, data , kind, metadata,)
         # response = v1.patch_namespaced_secret(name,ns,body)
         response = v1.replace_namespaced_secret(name,ns,body)
         logger.debug(response)
@@ -42,9 +46,12 @@ def create_fn(spec,logger=None,body=None,**kwargs):
     
     try:
         avoidNamespaces = body.get('avoidNamespaces')
+        logger.debug (f'Avoiding : {avoidNamespaces}')
+        if avoidNamespaces == None:
+            avoidNamespaces = []
     except KeyError:
         avoidNamespaces = ''
-        logger.debug("not avoiding namespaces")
+        logger.debug("not avoiding any namespaces")
         
     try:
         name = body['metadata']['name']
@@ -78,7 +85,7 @@ def get_ns_list(v1,logger,matchNamespace,avoidNamespaces):
         for ns in nss:
             if re.match(matchns, ns.metadata.name):
                 matchedns.append(ns.metadata.name)
-                logger.info(f'Matched namespaces: {ns.metadata.name} matchpathern: {matchns}')   
+                logger.info(f'Matched namespaces: {ns.metadata.name} matchpathern: {matchns}')
     for avoidns in avoidNamespaces:
         for ns in nss:
             if re.match(avoidns, ns.metadata.name):
@@ -97,7 +104,7 @@ def create_secret(v1,logger,namespace,name,data):
     metadata = {'name': name, 'namespace': namespace}
     api_version = 'v1'
     kind = 'Secret'
-    body = client.V1Secret(api_version, data , kind, metadata, type='kubernetes.io/tls')
+    body = client.V1Secret(api_version, data , kind, metadata)
     # kopf.adopt(body)
     try:
         api_response = v1.create_namespaced_secret(namespace, body)
@@ -105,7 +112,8 @@ def create_secret(v1,logger,namespace,name,data):
         if e.reason == 'Conflict':
             logger.info(f"Conflict creating the secret: It may be already a `{name}` secret in namespace: '{namespace}'")
             return 0
-        logger.error(f'Can not create a secret, it is base64 encoded? data: {data}')
-        logger.error(f'Kube exception {e}')
+        logger.error(f'Can not create a secret, it is base64 encoded? ')
+        # uncoment next line for debug, not por production. (avoid send secrets to logs)
+        # logger.error(f'Kube exception {e}')
         return 1
     return 0
