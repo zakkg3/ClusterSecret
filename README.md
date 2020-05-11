@@ -66,7 +66,11 @@ data:
   password: Nzg5MTAxMTIxMgo=
 ```
 
- 
+# Debugging.
+
+Overwirte deployment entrypoint (Kubernetes `command`) from `kopf run /src/handlers.py` to `kopf run /src/handlers.py --verbose`
+
+NOTE: in debug mode object data (the secret) are sent to stdout, potentially logs are being collected by Loki / Elasticsearch  or any log management platform -> Not for production!.
  
 # to-do:
  - allow to pass annotations.
