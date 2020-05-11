@@ -13,7 +13,6 @@ def on_delete(spec,body,name,logger=None, **_):
         
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='data')
 def on_field_data(old, new, body,name,logger=None, **_):
-    logger.debug('----------------')
     logger.info(f'Data changed: {old} -> {new}')
     syncedns = body['status']['create_fn']['syncedns']
     v1 = client.CoreV1Api()
@@ -49,11 +48,9 @@ def create_fn(spec,logger=None,body=None,**kwargs):
         
     try:
         name = body['metadata']['name']
-        logger.debug (f"name: {name}")
     except KeyError:
-        logger.debug("No name ?")
+        logger.debug("No name in body ?")
         raise kopf.TemporaryError("can not get the name.")
-
     try:
         data = body.get('data')
     except KeyError:
@@ -112,4 +109,3 @@ def create_secret(v1,logger,namespace,name,data):
         logger.error(f'Kube exception {e}')
         return 1
     return 0
-                
