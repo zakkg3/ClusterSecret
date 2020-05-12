@@ -25,5 +25,5 @@ spec:
         # - name: regcred
         containers:
         - name: clustersecret
-          image: flag5/clustersecret:latest
+          image: flag5/clustersecret:0.0.2
           imagePullPolicy: Always
