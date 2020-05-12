@@ -1,2 +1,2 @@
-kopf
+kopf===0.27rc6
 kubernetes
