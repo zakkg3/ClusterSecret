@@ -19,15 +19,17 @@ data:
   tls.key: BASE64
 ```
 
-ClusterSecret operator will make sure all the matching namespaces will have the secret available.
-Any change on the secret will be replicated to all the matching namespaces
+ClusterSecret operator will make sure all the matching namespaces will have the secret available. New namespaces, if they matches the parttern will also have the secret.
+Any change on the ClusterSecret will update all related secrets.
+
+Use it for certificates, registry pulling credentials and so on.
 
 Inspired in:
 
  - https://github.com/kubernetes/kubernetes/issues/70147
  - https://github.com/kubernetes/kubernetes/issues/62153
 
-Use it for certificates, registry pulling credentials and so on.
+
 
 # installation
 
@@ -50,7 +52,7 @@ To instal ClusterSecret operator we need to create (in this order):
 
 create a ClusterSecret object yaml like the one above, or in the example in yaml/Object_example/obj.yaml and apply it in your cluster `kubectl apply -f yaml/Object_example/obj.yaml`
 
-The ClusterSecret operator will pick it up and will create a copy in every matching namespace:  match `matchNamespace` but not matching  `avoidNamespaces` RegExp's.
+The ClusterSecret operator will pick it up and will create the secret in every matching namespace:  match `matchNamespace` but not matching  `avoidNamespaces` RegExp's.
 
 You can specify multiple matching or non-matching RegExp. By default it will match all, same as defining matchNamespace = * 
 
@@ -70,8 +72,10 @@ data:
 
 Overwirte deployment entrypoint (Kubernetes `command`) from `kopf run /src/handlers.py` to `kopf run /src/handlers.py --verbose`
 
-NOTE: in debug mode object data (the secret) are sent to stdout, potentially logs are being collected by Loki / Elasticsearch  or any log management platform -> Not for production!.
+**NOTE**: in **debug mode** object data (the secret) are sent to stdout, potentially logs are being collected by Loki / Elasticsearch  or any log management platform -> **Not for production!**.
  
-# to-do:
- - allow to pass annotations.
+# readmap:
+ - set type of secret (ie tls)
+ - set annotations and labels
+ 
  
