@@ -19,7 +19,7 @@ data:
   tls.key: BASE64
 ```
 
-ClusterSecret operator will make sure all the matching namespaces will have the secret available. New namespaces, if they matches the parttern will also have the secret.
+ClusterSecret operator will make sure all the matching namespaces will have the secret available. New namespaces, if they match the parttern, will also have the secret.
 Any change on the ClusterSecret will update all related secrets.
 
 Use it for certificates, registry pulling credentials and so on.
