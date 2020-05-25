@@ -74,7 +74,8 @@ Overwirte deployment entrypoint (Kubernetes `command`) from `kopf run /src/handl
 
 **NOTE**: in **debug mode** object data (the secret) are sent to stdout, potentially logs are being collected by Loki / Elasticsearch  or any log management platform -> **Not for production!**.
  
-# readmap:
+# Roadmap:
+ - implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
  - set type of secret (ie tls)
  - set annotations and labels
  
