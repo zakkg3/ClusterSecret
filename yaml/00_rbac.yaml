@@ -17,7 +17,7 @@ rules:
 
   # Framework: knowing which other operators are running (i.e. peering).
   - apiGroups: [clustersecret.io]
-    resources: [clustersecret]
+    resources: [clustersecrets]
     verbs: [list, watch, patch, get]
   - apiGroups: [clustersecret.io]
     resources: [customresourcedefinitions]
@@ -27,6 +27,11 @@ rules:
   - apiGroups: [clustersecret.io]
     resources: [clustersecret]
     verbs: [list, watch]
+    
+  # Watch naespaces 
+  - apiGroups: [""]
+    resources: [namespaces]
+    verbs: [watch, list, get]
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
