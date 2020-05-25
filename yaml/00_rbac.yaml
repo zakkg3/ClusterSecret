@@ -53,11 +53,6 @@ rules:
     resources: [events]
     verbs: [create]
 
-  # Application: watching & handling for the custom resource we declare.
-  - apiGroups: [clustersecret.io]
-    resources: [redmineissues]
-    verbs: [list, watch, patch]
-
   # Application: other resources it produces and manipulates.
   # Here, we create secrets, but we do not delete them ever.
   - apiGroups: [batch, extensions]
