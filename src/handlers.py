@@ -16,19 +16,22 @@ def on_delete(spec,body,name,logger=None, **_):
 
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='data')
 def on_field_data(old, new, body,name,logger=None, **_):
-    logger.info(f'Data changed: {old} -> {new}')
-    syncedns = body['status']['create_fn']['syncedns']
-    v1 = client.CoreV1Api()
-    for ns in syncedns:
-        logger.info(f'Re Syncing secret {name} in ns {ns}')
-        metadata = {'name': name, 'namespace': ns}
-        api_version = 'v1'
-        kind = 'Secret'
-        data = new
-        body = client.V1Secret(api_version, data , kind, metadata)
-        # response = v1.patch_namespaced_secret(name,ns,body)
-        response = v1.replace_namespaced_secret(name,ns,body)
-        logger.debug(response)
+    logger.debug(f'Data changed: {old} -> {new}')
+    if old is not None:
+        syncedns = body['status']['create_fn']['syncedns']
+        v1 = client.CoreV1Api()
+        for ns in syncedns:
+            logger.info(f'Re Syncing secret {name} in ns {ns}')
+            metadata = {'name': name, 'namespace': ns}
+            api_version = 'v1'
+            kind = 'Secret'
+            data = new
+            body = client.V1Secret(api_version, data , kind, metadata)
+            # response = v1.patch_namespaced_secret(name,ns,body)
+            response = v1.replace_namespaced_secret(name,ns,body)
+            logger.debug(response)
+    else:
+        logger.debug('This is a new object')
 
 csecs = {} # all cluster secrets.
 
