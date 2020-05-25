@@ -17,7 +17,7 @@ rules:
 
   # Framework: knowing which other operators are running (i.e. peering).
   - apiGroups: [clustersecret.io]
-    resources: [clustersecret]
+    resources: [clusterkopfpeerings]
     verbs: [list, watch, patch, get]
   - apiGroups: [clustersecret.io]
     resources: [customresourcedefinitions]
@@ -25,8 +25,18 @@ rules:
 
   # Application: read-only access for watching cluster-wide.
   - apiGroups: [clustersecret.io]
-    resources: [clustersecret]
+    resources: [clustersecrets]
     verbs: [list, watch]
+    
+  # Watch naespaces 
+  - apiGroups: [""]
+    resources: [namespaces]
+    verbs: [watch, list, get]
+    
+  # Handle secrets 
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: [watch, list, get, patch]
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
@@ -48,16 +58,8 @@ rules:
     resources: [events]
     verbs: [create]
 
-  # Application: watching & handling for the custom resource we declare.
-  - apiGroups: [clustersecret.io]
-    resources: [redmineissues]
-    verbs: [list, watch, patch]
-
   # Application: other resources it produces and manipulates.
   # Here, we create secrets, but we do not delete them ever.
-  - apiGroups: [batch, extensions]
-    resources: [jobs]
-    verbs: [create]
   - apiGroups: [""]
     resources: [secrets]
     verbs: [create,update,patch]
