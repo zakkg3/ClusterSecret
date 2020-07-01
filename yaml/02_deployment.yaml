@@ -22,3 +22,9 @@ spec:
         - name: clustersecret
           image: flag5/clustersecret:0.0.3
           # imagePullPolicy: Always
+          # Uncomment next lines for debug:
+          # command:
+          #   - "kopf"
+          #   - "run"
+          #   - "/src/handlers.py"
+          #   - "--verbose"
