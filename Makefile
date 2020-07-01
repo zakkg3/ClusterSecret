@@ -1,7 +1,7 @@
 IMG_NAMESPACE = flag5
 IMG_NAME = clustersecret
 IMG_FQNAME = $(IMG_NAMESPACE)/$(IMG_NAME)
-IMG_VERSION = 0.0.2
+IMG_VERSION = 0.0.3
 
 .PHONY: container push clean
 all: container push
