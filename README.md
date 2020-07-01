@@ -58,7 +58,7 @@ You can specify multiple matching or non-matching RegExp. By default it will mat
 ## Minimal example
 
 ```
-apiVersion: v2
+apiVersion: clustersecret.io/v1
 kind: ClusterSecret
 metadata:
   name: global-secret
