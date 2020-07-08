@@ -18,16 +18,22 @@ data:
   tls.key: BASE64
 ```
 
-ClusterSecret operator will make sure all the matching namespaces will have the secret available. New namespaces, if they match the parttern, will also have the secret.
-Any change on the ClusterSecret will update all related secrets.
+ClusterSecret operator makes sure all the matching namespaces have the secret available. New namespaces, if they match the parttern, will also have the secret.
+Any change on the ClusterSecret will update all related secrets. Deleting the ClusterSecret delete "child" (all cloned secrets) too.
 
 Use it for certificates, registry pulling credentials and so on.
 
-Inspired in:
+## Use case.
 
- - https://github.com/kubernetes/kubernetes/issues/70147
- - https://github.com/kubernetes/kubernetes/issues/62153
+when you need a secret in more than one namespace. you need to get the secret, edit the namespace and create it. This could be done with one command:
 
+```
+kubectl get secret <secret-name> -n <source-namespace> -o yaml \
+| sed s/"namespace: <source-namespace>"/"namespace: <destination-namespace>"/\
+| kubectl apply -n <destination-namespace> -f -
+```
+
+But if you whant to automate the cloning of secrets into a set of namespaces (a regex pattern). ClusterSecret is the way to go.
 
 
 # installation
