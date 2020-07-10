@@ -18,14 +18,14 @@ data:
   tls.key: BASE64
 ```
 
-ClusterSecret operator makes sure all the matching namespaces have the secret available. New namespaces, if they match the parttern, will also have the secret.
-Any change on the ClusterSecret will update all related secrets. Deleting the ClusterSecret delete "child" (all cloned secrets) too.
+ClusterSecret operator makes sure all the matching namespaces have the secret available. New namespaces, if they match the pattern, will also have the secret.
+Any change on the ClusterSecret will update all related secrets. Deleting the ClusterSecret deletes "child" secrets (all cloned secrets) too.
 
 Use it for certificates, registry pulling credentials and so on.
 
 ## Use case.
 
-when you need a secret in more than one namespace. you need to get the secret, edit the namespace and create it. This could be done with one command:
+when you need a secret in more than one namespace. you need to get the secret from the origin namespace, edit the  the secret with the new namespace and create the new one. This could be done with one command:
 
 ```
 kubectl get secret <secret-name> -n <source-namespace> -o yaml \
@@ -33,7 +33,7 @@ kubectl get secret <secret-name> -n <source-namespace> -o yaml \
 | kubectl apply -n <destination-namespace> -f -
 ```
 
-But if you whant to automate the cloning of secrets into a set of namespaces (a regex pattern). ClusterSecret is the way to go.
+But if you want to automate the cloning of secrets into a set of namespaces (a regex pattern). ClusterSecret is the way to go.
 
 
 # installation
@@ -77,7 +77,7 @@ data:
 
 Overwirte deployment entrypoint (Kubernetes `command`) from `kopf run /src/handlers.py` to `kopf run /src/handlers.py --verbose`
 
-**NOTE**: in **debug mode** object data (the secret) are sent to stdout, potentially logs are being collected by Loki / Elasticsearch  or any log management platform -> **Not for production!**.
+**NOTE**: in **debug mode** object data (the secret) are sent to stdout, potentially logs are being collected by Loki / Elasticsearch or any log management platform -> **Not for production!**.
  
 # Roadmap:
  - implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
