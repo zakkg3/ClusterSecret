@@ -8,7 +8,7 @@ def on_delete(spec,body,name,logger=None, **_):
     syncedns = body['status']['create_fn']['syncedns']
     v1 = client.CoreV1Api()
     for ns in syncedns:
-        logger.info(f'deleting secret {name} from naespace {ns}')
+        logger.info(f'deleting secret {name} from namespace {ns}')
         try:
             v1.delete_namespaced_secret(name,ns)
         except client.rest.ApiException as e:
@@ -20,13 +20,18 @@ def on_field_data(old, new, body,name,logger=None, **_):
     if old is not None:
         syncedns = body['status']['create_fn']['syncedns']
         v1 = client.CoreV1Api()
+
+        secret_type = 'Opaque'
+        if 'type' in body:
+            secret_type = body['type']
+
         for ns in syncedns:
             logger.info(f'Re Syncing secret {name} in ns {ns}')
             metadata = {'name': name, 'namespace': ns}
             api_version = 'v1'
             kind = 'Secret'
             data = new
-            body = client.V1Secret(api_version, data , kind, metadata)
+            body = client.V1Secret(api_version, data , kind, metadata, type = secret_type)
             # response = v1.patch_namespaced_secret(name,ns,body)
             response = v1.replace_namespaced_secret(name,ns,body)
             logger.debug(response)
@@ -110,13 +115,17 @@ def create_secret(logger,namespace,body,v1=None):
     except KeyError:
         data = ''
         logger.error("Empty secret?? could not get the data.")
-    
+ 
+    secret_type = 'Opaque'
+    if 'type' in body:
+        secret_type = body['type']
+
     metadata = {'name': name, 'namespace': namespace}
     api_version = 'v1'
     kind = 'Secret'
-    body = client.V1Secret(api_version, data , kind, metadata)
+    body = client.V1Secret(api_version, data , kind, metadata, type = secret_type)
     # kopf.adopt(body)
-    logger.info(f"clonning secret in namespace {namespace}")
+    logger.info(f"cloning secret in namespace {namespace}")
     try:
         api_response = v1.create_namespaced_secret(namespace, body)
     except client.rest.ApiException as e:
