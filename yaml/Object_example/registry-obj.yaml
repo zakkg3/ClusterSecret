@@ -2,7 +2,7 @@
 apiVersion: clustersecret.io/v1
 kind: ClusterSecret
 metadata:
-  name: global-secret
+  name: global-regcred
   labels:
     somelabel: somevalue
   annotations:
@@ -12,6 +12,6 @@ matchNamespace:
 avoidNamespaces:
   - 'default'
 type: kubernetes.io/dockerconfigjson
-# as output in kubectl create secret docker-registry regkey --docker-server my.docker.registry --docker-username adminuser --docker-password adminpass -o yaml
+# as output in kubectl create secret docker-registry regkey --docker-server my.docker.registry --docker-username adminuser --docker-password adminpass -o yaml --dry-run
 data:
   .dockerconfigjson: eyJhdXRocyI6eyJteS5kb2NrZXIucmVnaXN0cnkiOnsidXNlcm5hbWUiOiJhZG1pbnVzZXIiLCJwYXNzd29yZCI6ImFkbWlucGFzcyIsImF1dGgiOiJZV1J0YVc1MWMyVnlPbUZrYldsdWNHRnpjdz09In19fQ==
