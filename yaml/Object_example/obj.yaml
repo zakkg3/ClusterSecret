@@ -8,9 +8,9 @@ metadata:
   annotations:
     someannotation: somevalue
 matchNamespace:
-  - prefix_ns-*
-  - anothernamespace
-  - cluster*
+  - 'prefix_ns-.+'
+  - 'anothernamespace'
+  - 'cluster.*'
 avoidNamespaces:
   - supersecret-ns
   - default
