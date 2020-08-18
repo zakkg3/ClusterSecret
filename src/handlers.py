@@ -145,4 +145,6 @@ async def namespace_watcher(patch,logger,meta,body,event,**kwargs):
         if new_ns in ns_new_list:
             logger.debug(f"Clonning secret {v['body']['metadata']['name']} into the new namespace {new_ns}")
             create_secret(logger,new_ns,body,v1)
+            if not 'create_fn' in v['body']['status']:
+                v['body']['status']['create_fn'] = {}
             v['body']['status']['create_fn']['syncedns'] = ns_new_list
