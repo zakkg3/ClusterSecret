@@ -16,12 +16,12 @@ spec:
     singular: clustersecret
     shortNames:
       - csec
-  # additionalPrinterColumns:
-  #   - name: ID
-  #     type: integer
-  #     priority: 0
-  #     JSONPath: .status.create_fn.id
-  #     description: Ticket ID
+  additionalPrinterColumns:
+    - name: Type
+      type: string
+      priority: 0
+      JSONPath: .type
+      description: Secret Type
   #   - name: Subject
   #     type: string
   #     priority: 0

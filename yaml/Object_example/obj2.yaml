@@ -4,7 +4,7 @@ kind: ClusterSecret
 metadata:
   name: global-secret2
 matchNamespace:
-  - cluster*
+  - 'cluster.*'
 data:
   username: YWRtaW4=
   password: MWYyZDFlMmU2N2Rm
