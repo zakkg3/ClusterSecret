@@ -5,6 +5,7 @@ Introduce Kubernetes ClusterSecret
 Global inter-namespace cluster secrets - Secrets that work across namespaces 
 
 ```
+Kind: ClusterSecret
 apiVersion: clustersecret.io/v1
 metadata:
   name: default-wildcard-certifiate
