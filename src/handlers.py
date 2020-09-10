@@ -88,12 +88,14 @@ def get_ns_list(logger,body,v1=None):
         for ns in nss:
             if re.match(matchns, ns.metadata.name):
                 matchedns.append(ns.metadata.name)
-                logger.debug(f'Matched namespaces: {ns.metadata.name} matchpathern: {matchns}')   
-    for avoidns in avoidNamespaces:
-        for ns in nss:
-            if re.match(avoidns, ns.metadata.name):
-                avoidedns.append(ns.metadata.name)
-                logger.debug(f'Skipping namespaces: {ns.metadata.name} avoidpatrn: {avoidns}')  
+                logger.debug(f'Matched namespaces: {ns.metadata.name} matchpathern: {matchns}')
+    
+    if avoidNamespaces:
+        for avoidns in avoidNamespaces:
+            for ns in nss:
+                if re.match(avoidns, ns.metadata.name):
+                    avoidedns.append(ns.metadata.name)
+                    logger.debug(f'Skipping namespaces: {ns.metadata.name} avoidpatrn: {avoidns}')  
     # purge
     for ns in matchedns:
         if ns in avoidedns:
