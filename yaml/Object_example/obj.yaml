@@ -2,6 +2,7 @@
 apiVersion: clustersecret.io/v1
 kind: ClusterSecret
 metadata:
+  namespace: clustersecret
   name: global-secret
   labels:
     somelabel: somevalue

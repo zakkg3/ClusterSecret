@@ -3,6 +3,7 @@ apiVersion: clustersecret.io/v1
 kind: ClusterSecret
 metadata:
   name: global-regcred
+  namespace: default
   labels:
     somelabel: somevalue
   annotations:

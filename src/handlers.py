@@ -12,7 +12,10 @@ def on_delete(spec,body,name,logger=None, **_):
         try:
             v1.delete_namespaced_secret(name,ns)
         except client.rest.ApiException as e:
-            logger.error(f"Something failed trying to delete the secret {e}")
+            if e.status == 404:
+                logger.warning(f"The namespace {ns} may not exist anymore: Not found")
+            else:
+                logger.warning(f" Something wierd deleting the secret: {e}")
 
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='data')
 def on_field_data(old, new, body,name,logger=None, **_):
@@ -56,7 +59,8 @@ async def create_fn(spec,uid,logger=None,body=None,**kwargs):
     #store status in memory
     csecs[uid]={}
     csecs[uid]['body']=body
-    
+    csecs[uid]['syncedns']=matchedns
+
     return {'syncedns': matchedns}
 
 def get_ns_list(logger,body,v1=None):
@@ -87,12 +91,13 @@ def get_ns_list(logger,body,v1=None):
         for ns in nss:
             if re.match(matchns, ns.metadata.name):
                 matchedns.append(ns.metadata.name)
-                logger.debug(f'Matched namespaces: {ns.metadata.name} matchpathern: {matchns}')   
-    for avoidns in avoidNamespaces:
-        for ns in nss:
-            if re.match(avoidns, ns.metadata.name):
-                avoidedns.append(ns.metadata.name)
-                logger.debug(f'Skipping namespaces: {ns.metadata.name} avoidpatrn: {avoidns}')  
+                logger.debug(f'Matched namespaces: {ns.metadata.name} matchpathern: {matchns}')
+    if avoidNamespaces:
+        for avoidns in avoidNamespaces:
+            for ns in nss:
+                if re.match(avoidns, ns.metadata.name):
+                    avoidedns.append(ns.metadata.name)
+                    logger.debug(f'Skipping namespaces: {ns.metadata.name} avoidpatrn: {avoidns}')  
     # purge
     for ns in matchedns:
         if ns in avoidedns:
@@ -145,15 +150,16 @@ async def namespace_watcher(patch,logger,meta,body,event,**kwargs):
     
     for k,v in csecs.items():
         obj_body = v['body']
-        # logger.debug(f'k: {k} \n v:{v}')
-        matcheddns = v['body']['status']['create_fn']['syncedns']
+        #logger.debug(f'k: {k} \n v:{v}')
+        matcheddns = v['syncedns']
         logger.debug(f"Old matcheddns: {matcheddns}")
         logger.debug(f"name: {v['body']['metadata']['name']}")
         ns_new_list=get_ns_list(logger,obj_body,v1)
         logger.debug(f"new matched list: {ns_new_list}")
         if new_ns in ns_new_list:
             logger.debug(f"Clonning secret {v['body']['metadata']['name']} into the new namespace {new_ns}")
-            create_secret(logger,new_ns,body,v1)
-            if not 'create_fn' in v['body']['status']:
-                v['body']['status']['create_fn'] = {}
-            v['body']['status']['create_fn']['syncedns'] = ns_new_list
+            create_secret(logger,new_ns,v['body'],v1)
+            v['syncedns'] = ns_new_list
+            
+    # update ns_new_list on the object so then we also delete from there
+    return {'syncedns': ns_new_list}

@@ -62,6 +62,14 @@ The ClusterSecret operator will pick it up and will create the secret in every m
 
 You can specify multiple matching or non-matching RegExp. By default it will match all, same as defining matchNamespace = * 
 
+## Get the clustersecrets
+
+```
+$> kubectl get csec -n clustersecret
+NAME            TYPE
+global-secret
+```
+
 ## Minimal example
 
 ```
@@ -69,6 +77,7 @@ apiVersion: clustersecret.io/v1
 kind: ClusterSecret
 metadata:
   name: global-secret
+  namespace: my-fav-namespce
 data:
   username: MTIzNDU2Cg==
   password: Nzg5MTAxMTIxMgo=
@@ -76,9 +85,25 @@ data:
 
 # Debugging.
 
-Overwirte deployment entrypoint (Kubernetes `command`) from `kopf run /src/handlers.py` to `kopf run /src/handlers.py --verbose`
 
 **NOTE**: in **debug mode** object data (the secret) are sent to stdout, potentially logs are being collected by Loki / Elasticsearch or any log management platform -> **Not for production!**.
+
+Overwirte deployment entrypoint (Kubernetes `command`) from `kopf run /src/handlers.py` to `kopf run /src/handlers.py --verbose`
+
+# Dev: Run it in your terminal.
+
+For development you dont want to build/push/recreate pod every time. Instead we can run the operator locally:
+
+Once you have the config in place (kubeconfig) you can just install the requirementes (pip install /base-image/requirements.txt) and then run the operator from your machine (usefull for debbuging.)
+
+```
+kopf run ./src/handlers.py --verbose
+```
+
+ Make sure to have the proper RBAC in place (`k apply -f yaml/00_rbac.yaml`) and also the CRD definition (`k apply -f yaml/01_crd.yaml`)
+
+
+
  
 # Roadmap:
  - implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)

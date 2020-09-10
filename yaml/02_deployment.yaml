@@ -20,7 +20,7 @@ spec:
         # - name: regcred
         containers:
         - name: clustersecret
-          image: flag5/clustersecret:0.0.4
+          image: flag5/clustersecret:0.0.5
           # imagePullPolicy: Always
           # Uncomment next lines for debug:
           # command:
