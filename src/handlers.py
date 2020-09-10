@@ -12,7 +12,7 @@ def on_delete(spec,body,name,logger=None, **_):
         try:
             v1.delete_namespaced_secret(name,ns)
         except client.rest.ApiException as e:
-            logger.error(f"Something failed trying to delete the secret {e}")
+            logger.warning(f"The namespace may not exist anymore {e}")
 
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='data')
 def on_field_data(old, new, body,name,logger=None, **_):
@@ -158,3 +158,6 @@ async def namespace_watcher(patch,logger,meta,body,event,**kwargs):
             logger.debug(f"Clonning secret {v['body']['metadata']['name']} into the new namespace {new_ns} \n")
             create_secret(logger,new_ns,v['body'],v1)
             v['syncedns'] = ns_new_list
+            
+    # update ns_new_list on the object so then we also delete from there
+    return {'syncedns': ns_new_list}
