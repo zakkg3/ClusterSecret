@@ -56,6 +56,7 @@ async def create_fn(spec,uid,logger=None,body=None,**kwargs):
     #store status in memory
     csecs[uid]={}
     csecs[uid]['body']=body
+    csecs[uid]['body']['status']['create_fn']['syncedns']=matchedns
     
     return {'syncedns': matchedns}
 
@@ -145,7 +146,7 @@ async def namespace_watcher(patch,logger,meta,body,event,**kwargs):
     
     for k,v in csecs.items():
         obj_body = v['body']
-        # logger.debug(f'k: {k} \n v:{v}')
+        logger.debug(f'k: {k} \n v:{v}')
         matcheddns = v['body']['status']['create_fn']['syncedns']
         logger.debug(f"Old matcheddns: {matcheddns}")
         logger.debug(f"name: {v['body']['metadata']['name']}")
