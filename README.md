@@ -85,16 +85,25 @@ data:
 
 # Debugging.
 
+
+**NOTE**: in **debug mode** object data (the secret) are sent to stdout, potentially logs are being collected by Loki / Elasticsearch or any log management platform -> **Not for production!**.
+
 Overwirte deployment entrypoint (Kubernetes `command`) from `kopf run /src/handlers.py` to `kopf run /src/handlers.py --verbose`
 
 # Dev: Run it in your terminal.
 
-For develop you dont want to build/push/recreate pod. instead we can run the operator locally.
-Once you have the config in place (kubeconfig) you can just install the requirementes (pip install /base-image/requirements.txt) and then run the operator in your machine (usefull for debbuging.) Make sure to have the propper RBAC in place (`k apply -f yaml/00_rbac.yaml`) and also the CRD (`k apply -f yaml/01_crd.yaml`)
+For development you dont want to build/push/recreate pod every time. Instead we can run the operator locally:
+
+Once you have the config in place (kubeconfig) you can just install the requirementes (pip install /base-image/requirements.txt) and then run the operator from your machine (usefull for debbuging.)
+
+```
+kopf run ./src/handlers.py --verbose
+```
+
+ Make sure to have the proper RBAC in place (`k apply -f yaml/00_rbac.yaml`) and also the CRD definition (`k apply -f yaml/01_crd.yaml`)
 
 
 
-**NOTE**: in **debug mode** object data (the secret) are sent to stdout, potentially logs are being collected by Loki / Elasticsearch or any log management platform -> **Not for production!**.
  
 # Roadmap:
  - implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
