@@ -12,7 +12,10 @@ def on_delete(spec,body,name,logger=None, **_):
         try:
             v1.delete_namespaced_secret(name,ns)
         except client.rest.ApiException as e:
-            logger.warning(f"The namespace may not exist anymore {e}")
+            if e.status == 404:
+                logger.warning(f"The namespace {ns} may not exist anymore: Not found")
+            else:
+                logger.warning(f" Something wierd deleting the secret: {e}")
 
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='data')
 def on_field_data(old, new, body,name,logger=None, **_):
