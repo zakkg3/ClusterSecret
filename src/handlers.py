@@ -4,7 +4,7 @@ from kubernetes import client, config
 
 
 @kopf.on.delete('clustersecret.io', 'v1', 'clustersecrets')
-def on_delete(spec,body,name,logger=None, **_):
+def on_delete(spec,uid,body,name,logger=None, **_):
     syncedns = body['status']['create_fn']['syncedns']
     v1 = client.CoreV1Api()
     for ns in syncedns:
@@ -16,6 +16,13 @@ def on_delete(spec,body,name,logger=None, **_):
                 logger.warning(f"The namespace {ns} may not exist anymore: Not found")
             else:
                 logger.warning(f" Something wierd deleting the secret: {e}")
+        
+    #delete also from memory: prevent syncing with new namespaces
+    try:
+        csecs.pop(uid)
+        logger.debug(f"csec {uid} deleted from memory ok")
+    except KeyError as k:
+        logger.info(f" This csec were not found in memory, maybe it was created in another run: {k}")
 
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='data')
 def on_field_data(old, new, body,name,logger=None, **_):
