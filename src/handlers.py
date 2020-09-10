@@ -89,7 +89,6 @@ def get_ns_list(logger,body,v1=None):
             if re.match(matchns, ns.metadata.name):
                 matchedns.append(ns.metadata.name)
                 logger.debug(f'Matched namespaces: {ns.metadata.name} matchpathern: {matchns}')
-    
     if avoidNamespaces:
         for avoidns in avoidNamespaces:
             for ns in nss:
@@ -148,14 +147,14 @@ async def namespace_watcher(patch,logger,meta,body,event,**kwargs):
     
     for k,v in csecs.items():
         obj_body = v['body']
-        logger.debug(f'k: {k} \n v:{v}')
+        #logger.debug(f'k: {k} \n v:{v}')
         matcheddns = v['syncedns']
         logger.debug(f"Old matcheddns: {matcheddns}")
         logger.debug(f"name: {v['body']['metadata']['name']}")
         ns_new_list=get_ns_list(logger,obj_body,v1)
         logger.debug(f"new matched list: {ns_new_list}")
         if new_ns in ns_new_list:
-            logger.debug(f"Clonning secret {v['body']['metadata']['name']} into the new namespace {new_ns} \n")
+            logger.debug(f"Clonning secret {v['body']['metadata']['name']} into the new namespace {new_ns}")
             create_secret(logger,new_ns,v['body'],v1)
             v['syncedns'] = ns_new_list
             
