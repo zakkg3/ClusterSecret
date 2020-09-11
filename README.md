@@ -1,9 +1,14 @@
 # ClusterSecret
 Introduce Kubernetes ClusterSecret 
 
+Global inter-namespace cluster secrets - Secrets that work across namespaces 
+
+ClusterSecret operator makes sure all the matching namespaces have the secret available. New namespaces, if they match the pattern, will also have the secret.
+Any change on the ClusterSecret will update all related secrets. Deleting the ClusterSecret deletes "child" secrets (all cloned secrets) too.
+
 <img src="https://github.com/zakkg3/ClusterSecret/blob/master/docs/clusterSecret.png" alt="Clustersecret diagram">
 
-Global inter-namespace cluster secrets - Secrets that work across namespaces 
+Here is how it looks like:
 
 ```
 Kind: ClusterSecret
@@ -21,14 +26,19 @@ data:
   tls.key: BASE64
 ```
 
-ClusterSecret operator makes sure all the matching namespaces have the secret available. New namespaces, if they match the pattern, will also have the secret.
-Any change on the ClusterSecret will update all related secrets. Deleting the ClusterSecret deletes "child" secrets (all cloned secrets) too.
+
+## Use cases.
+
 
 Use it for certificates, registry pulling credentials and so on.
 
-## Use case.
+when you need a secret in more than one namespace. you have to: 
 
-when you need a secret in more than one namespace. you need to get the secret from the origin namespace, edit the  the secret with the new namespace and create the new one. This could be done with one command:
+1- Get the secret from the origin namespace,
+2- Edit the  the secret with the new namespace
+3- Re-create the new secret in the new namespace. 
+
+This could be done with one command:
 
 ```
 kubectl get secret <secret-name> -n <source-namespace> -o yaml \
