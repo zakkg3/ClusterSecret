@@ -53,7 +53,7 @@ But if you want to automate the cloning of secrets into a set of namespaces (a r
 
 ## tl;dr
 
-```
+```bash
 kubectl apply -f ./yaml
 ```
 
@@ -76,7 +76,7 @@ You can specify multiple matching or non-matching RegExp. By default it will mat
 
 ## Get the clustersecrets
 
-```
+```bash
 $> kubectl get csec -n clustersecret
 NAME            TYPE
 global-secret
@@ -108,7 +108,7 @@ For development you dont want to build/push/recreate pod every time. Instead we 
 
 Once you have the config in place (kubeconfig) you can just install the requirementes (pip install /base-image/requirements.txt) and then run the operator from your machine (usefull for debbuging.)
 
-```
+```bash
 kopf run ./src/handlers.py --verbose
 ```
 
