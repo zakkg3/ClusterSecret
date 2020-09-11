@@ -121,15 +121,20 @@ kopf run ./src/handlers.py --verbose
 
  
 # Roadmap:
- [] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
- [x] set type of secret (ie tls)
- [] set annotations and labels
+ -[] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
+ -[x] set type of secret (ie tls)
+ -[] set annotations and labels
  
 # to-do:
 
- [] to ensure idempotent, on_resume we have to refresh memory ("csec" touple). More info in docs/roadmap.md
+ -[] to ensure idempotent, on_resume we have to refresh memory ("csec" touple). More info in docs/roadmap.md
  
  
  * * *
  
-[flag5.com](https://flag5.com) 
+# Support
+ 
+ If you need support, start with the troubleshooting guide: Run it in debug mode.
+ You can open issues and we will try to address them. 
+
+ That said, if you have questions, or just want to establish contact, reach out to us one way or another. [https://flag5.com](https://flag5.com) 
