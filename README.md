@@ -8,6 +8,7 @@ Global inter-namespace cluster secrets - Secrets that work across namespaces
 Kind: ClusterSecret
 apiVersion: clustersecret.io/v1
 metadata:
+  namespace: clustersecret
   name: default-wildcard-certifiate
 matchNamespace:
   - prefix_ns-*
