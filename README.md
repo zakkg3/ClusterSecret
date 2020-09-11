@@ -10,7 +10,7 @@ Any change on the ClusterSecret will update all related secrets. Deleting the Cl
 
 Here is how it looks like:
 
-```
+```yaml
 Kind: ClusterSecret
 apiVersion: clustersecret.io/v1
 metadata:
@@ -40,7 +40,7 @@ when you need a secret in more than one namespace. you have to:
 
 This could be done with one command:
 
-```
+```bash
 kubectl get secret <secret-name> -n <source-namespace> -o yaml \
 | sed s/"namespace: <source-namespace>"/"namespace: <destination-namespace>"/\
 | kubectl apply -n <destination-namespace> -f -
@@ -84,7 +84,7 @@ global-secret
 
 ## Minimal example
 
-```
+```yaml
 apiVersion: clustersecret.io/v1
 kind: ClusterSecret
 metadata:
