@@ -159,8 +159,7 @@ async def namespace_watcher(patch,logger,meta,body,event,**kwargs):
         obj_body = v['body']
         #logger.debug(f'k: {k} \n v:{v}')
         matcheddns = v['syncedns']
-        logger.debug(f"Old matcheddns: {matcheddns}")
-        logger.debug(f"name: {v['body']['metadata']['name']}")
+        logger.debug(f"Old matcheddns: {matcheddns} - name: {v['body']['metadata']['name']}")
         ns_new_list=get_ns_list(logger,obj_body,v1)
         logger.debug(f"new matched list: {ns_new_list}")
         if new_ns in ns_new_list:
