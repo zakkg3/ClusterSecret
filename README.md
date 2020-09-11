@@ -34,9 +34,12 @@ Use it for certificates, registry pulling credentials and so on.
 
 when you need a secret in more than one namespace. you have to: 
 
-1- Get the secret from the origin namespace,
-2- Edit the  the secret with the new namespace
+1- Get the secret from the origin namespace.
+
+2- Edit the  the secret with the new namespace.
+
 3- Re-create the new secret in the new namespace. 
+
 
 This could be done with one command:
 
@@ -46,7 +49,7 @@ kubectl get secret <secret-name> -n <source-namespace> -o yaml \
 | kubectl apply -n <destination-namespace> -f -
 ```
 
-But if you want to automate the cloning of secrets into a set of namespaces (a regex pattern). ClusterSecret is the way to go.
+Clustersecrets automates this. It keep track of any modification in your secret and it will also react to new namespaces. 
 
 
 # installation
