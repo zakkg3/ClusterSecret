@@ -1,6 +1,7 @@
 # ClusterSecret
 Introduce Kubernetes ClusterSecret 
 
+<img src="https://github.com/zakkg3/ClusterSecret/blob/master/docs/clusterSecret.png" alt="Clustersecret diagram">
 
 Global inter-namespace cluster secrets - Secrets that work across namespaces 
 
