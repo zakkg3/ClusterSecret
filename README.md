@@ -1,4 +1,8 @@
 # ClusterSecret
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4283/badge)](https://bestpractices.coreinfrastructure.org/projects/4283)
+
+---
+
 Introduce Kubernetes ClusterSecret 
 
 Global inter-namespace cluster secrets - Secrets that work across namespaces 
@@ -7,6 +11,8 @@ ClusterSecret operator makes sure all the matching namespaces have the secret av
 Any change on the ClusterSecret will update all related secrets. Deleting the ClusterSecret deletes "child" secrets (all cloned secrets) too.
 
 <img src="https://github.com/zakkg3/ClusterSecret/blob/master/docs/clusterSecret.png" alt="Clustersecret diagram">
+
+---
 
 Here is how it looks like:
 
@@ -35,9 +41,7 @@ Use it for certificates, registry pulling credentials and so on.
 when you need a secret in more than one namespace. you have to: 
 
 1- Get the secret from the origin namespace.
-
 2- Edit the  the secret with the new namespace.
-
 3- Re-create the new secret in the new namespace. 
 
 
