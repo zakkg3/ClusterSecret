@@ -121,13 +121,16 @@ kopf run ./src/handlers.py --verbose
 
  
 # Roadmap:
- -[] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
- -[x] set type of secret (ie tls)
- -[] set annotations and labels
+
+ - [] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
+ 
+ - [x] set type of secret (ie tls)
+ 
+ - [] set annotations and labels
  
 # to-do:
 
- -[] to ensure idempotent, on_resume we have to refresh memory ("csec" touple). More info in docs/roadmap.md
+ - [] on_resume we have to refresh memory ("csec" touple). More info in docs/roadmap.md
  
  
  * * *
