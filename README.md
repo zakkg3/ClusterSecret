@@ -127,5 +127,9 @@ kopf run ./src/handlers.py --verbose
  
 # to-do:
 
- [] to ensure idempotent, on_resume we have to refresh memory ("csec" touple) 
+ [] to ensure idempotent, on_resume we have to refresh memory ("csec" touple). More info in docs/roadmap.md
  
+ 
+ * * *
+ 
+[flag5.com](https://flag5.com) 
