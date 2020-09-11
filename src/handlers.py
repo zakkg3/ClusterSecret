@@ -114,6 +114,8 @@ def get_ns_list(logger,body,v1=None):
     
             
 def create_secret(logger,namespace,body,v1=None):
+    """Creates a given secret on a given namespace
+    """
     if v1 is None:
         v1 = client.CoreV1Api()
         logger.debug('new client - fn create secret')
@@ -151,6 +153,8 @@ def create_secret(logger,namespace,body,v1=None):
 
 @kopf.on.create('', 'v1', 'namespaces')
 async def namespace_watcher(patch,logger,meta,body,event,**kwargs):
+    """Watch for namespace events
+    """
     new_ns = meta['name']
     logger.debug(f"New namespace created: {new_ns} re-syncing")
     v1 = client.CoreV1Api()
@@ -159,12 +163,13 @@ async def namespace_watcher(patch,logger,meta,body,event,**kwargs):
         obj_body = v['body']
         #logger.debug(f'k: {k} \n v:{v}')
         matcheddns = v['syncedns']
-        logger.debug(f"Old matcheddns: {matcheddns} - name: {v['body']['metadata']['name']}")
+        logger.debug(f"Old matched namespace: {matcheddns} - name: {v['body']['metadata']['name']}")
         ns_new_list=get_ns_list(logger,obj_body,v1)
         logger.debug(f"new matched list: {ns_new_list}")
         if new_ns in ns_new_list:
             logger.debug(f"Clonning secret {v['body']['metadata']['name']} into the new namespace {new_ns}")
             create_secret(logger,new_ns,v['body'],v1)
+            # if there is a new matching ns, refresh memory
             v['syncedns'] = ns_new_list
             
     # update ns_new_list on the object so then we also delete from there
