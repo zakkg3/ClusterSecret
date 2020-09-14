@@ -5,7 +5,7 @@
 
 Introduce Kubernetes ClusterSecret 
 
-Global inter-namespace cluster secrets - Secrets that work across namespaces 
+Global inter-namespace cluster secrets - Secrets that work across namespaces  - Clusterwide secrets
 
 ClusterSecret operator makes sure all the matching namespaces have the secret available. New namespaces, if they match the pattern, will also have the secret.
 Any change on the ClusterSecret will update all related secrets. Deleting the ClusterSecret deletes "child" secrets (all cloned secrets) too.
