@@ -93,7 +93,7 @@ def get_ns_list(logger,body,v1=None):
     nss = v1.list_namespace().items
     matchedns = []
     avoidedns = []
-    
+
     for matchns in matchNamespace:
         for ns in nss:
             if re.match(matchns, ns.metadata.name):
