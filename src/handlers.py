@@ -93,8 +93,7 @@ def get_ns_list(logger,body,v1=None):
     nss = v1.list_namespace().items
     matchedns = []
     avoidedns = []
-    secretsdns = []
-
+    
     for matchns in matchNamespace:
         for ns in nss:
             if re.match(matchns, ns.metadata.name):
@@ -107,12 +106,11 @@ def get_ns_list(logger,body,v1=None):
                     avoidedns.append(ns.metadata.name)
                     logger.debug(f'Skipping namespaces: {ns.metadata.name} avoidpatrn: {avoidns}')  
     # purge
-    secretsdns = matchedns.copy()
-    for ns in matchedns:
+    for ns in matchedns.copy():
         if ns in avoidedns:
-            secretsdns.remove(ns)
- 
-    return secretsdns
+            matchedns.remove(ns)
+
+    return matchedns
     
             
 def create_secret(logger,namespace,body,v1=None):
