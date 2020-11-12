@@ -106,7 +106,7 @@ def get_ns_list(logger,body,v1=None):
                     avoidedns.append(ns.metadata.name)
                     logger.debug(f'Skipping namespaces: {ns.metadata.name} avoidpatrn: {avoidns}')  
     # purge
-    for ns in matchedns:
+    for ns in matchedns.copy():
         if ns in avoidedns:
             matchedns.remove(ns)
 
