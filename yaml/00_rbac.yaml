@@ -34,16 +34,16 @@ rules:
   - apiGroups: [clustersecret.io]
     resources: [clustersecrets]
     verbs: [list, watch, patch]
-    
-  # Watch naespaces 
+
+  # Watch naespaces
   - apiGroups: [""]
     resources: [namespaces]
     verbs: [watch, list, get, patch]
-    
-  # Handle secrets 
+
+  # Handle secrets
   - apiGroups: [""]
     resources: [secrets]
-    verbs: [watch, list, get, patch, create, delete]
+    verbs: [watch, list, get, patch, update, create, delete]
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
