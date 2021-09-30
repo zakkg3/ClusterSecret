@@ -102,6 +102,15 @@ data:
   password: Nzg5MTAxMTIxMgo=
 ```
 
+# Limit ClusterSecret to certain namespaces.
+
+This can be archived by changing the RBAC.
+You may want to replace https://github.com/zakkg3/ClusterSecret/blob/master/yaml/00_rbac.yaml#L43-L46
+for a new namespaced role and its correspondient rolebinding.
+
+Here is the official doc:
+https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+
 # Debugging.
 
 
