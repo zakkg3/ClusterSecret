@@ -1,0 +1,4 @@
+FROM arm32v7/python:3.8-slim
+RUN apt update && apt install -y build-essential
+ADD requirements.txt /
+RUN pip install -r requirements.txt
