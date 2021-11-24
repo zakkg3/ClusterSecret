@@ -1,2 +1,2 @@
-kopf===0.27rc6
-kubernetes
+kopf===1.35.3
+kubernetes===19.15.0

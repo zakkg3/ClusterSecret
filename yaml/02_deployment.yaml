@@ -20,11 +20,12 @@ spec:
         # - name: regcred
         containers:
         - name: clustersecret
-          image: flag5/clustersecret:0.0.6
+          image: flag5/clustersecret:0.0.7
           # imagePullPolicy: Always
           # Uncomment next lines for debug:
           # command:
           #   - "kopf"
           #   - "run"
+          #   - "-A"
           #   - "/src/handlers.py"
           #   - "--verbose"

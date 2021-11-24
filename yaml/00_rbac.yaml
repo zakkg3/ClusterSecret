@@ -9,7 +9,7 @@ metadata:
   namespace: "clustersecret"
   name: clustersecret-account
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: clustersecret-role-cluster
@@ -45,7 +45,7 @@ rules:
     resources: [secrets]
     verbs: [watch, list, get, patch, update, create, delete]
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   namespace: "clustersecret"
@@ -71,7 +71,7 @@ rules:
     resources: [secrets]
     verbs: [create,update,patch]
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: clustersecret-rolebinding-cluster
@@ -84,7 +84,7 @@ subjects:
     name: clustersecret-account
     namespace: "clustersecret"
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   namespace: "clustersecret"
