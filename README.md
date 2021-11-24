@@ -3,7 +3,7 @@
 
 ---
 
-Introduce Kubernetes ClusterSecret 
+Kubernetes ClusterSecret 
 
 Global inter-namespace cluster secrets - Secrets that work across namespaces  - Clusterwide secrets
 
@@ -58,7 +58,13 @@ Clustersecrets automates this. It keep track of any modification in your secret 
 
 # installation
 
-## tl;dr
+## Requirements
+
+Current version 0.0.7 is tested for Kubernetes >= 1.19 up to 1.25
+
+For older kubernes (<1.19) use the image tag "0.0.6" in  yaml/02_deployment.yaml
+
+## tl;dr install
 
 ```bash
 kubectl apply -f ./yaml
@@ -70,7 +76,7 @@ To instal ClusterSecret operator we need to create (in this order):
 
  - RBAC resources (avoid if you are not running RBAC) to allow the operator to create/update/patch secrets: yaml/00_
  - Custom resource definition for the ClusterSecret resource: yaml/01_crd.yaml
- - The ClusterSecret operator itself: yaml/02_deployment.yaml For ARM architectures yaml/arm32v7/02_deployment.yam
+ - The ClusterSecret operator itself: yaml/02_deployment.yaml || For **ARM architectures**: yaml/arm32v7/02_deployment.yam
  
  
 # quick start:
@@ -111,6 +117,10 @@ for a new namespaced role and its correspondient rolebinding.
 Here is the official doc:
 https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 
+## optional
+
+overwrite the deployment command with kopf namespaces instead of the "-A" (all namespaces)
+
 # Debugging.
 
 
@@ -132,12 +142,12 @@ kopf run ./src/handlers.py --verbose
 
 # Build the images
 
-There is makefiles for this, you can clone this repo. edit the makefile and then run make.
+There is makefiles for this, you can clone this repo. edit the makefile and then run 'make all'.
 
 You will need the base image first and then the final image.
 Find the base one in the folder base-image (yes very original name)
 
-Running make will build and push for all arch's supported. 
+Running just 'make' builds and push for all arch's supported. 
 
 ## x86
 
@@ -154,8 +164,14 @@ In case you want it for your raspberri py:
 cd base-images && make arm & cd ..
 make arm
 ```
+## Digests
 
- 
+latest = 0.0.7
+
+docker.io/flag5/clustersecret:
+
+0.0.7 digest: sha256:c8dffeefbd3c8c54af67be81cd769e3c18263920729946b75f098065318eddb1
+0.0.7_arm32: digest: sha256:ffac630417bd090c958c9facf50a31ba54e0b18c89ef52d8eec5c1326a5f20ad
 # Roadmap:
 
  - [] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)

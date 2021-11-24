@@ -3,7 +3,7 @@ IMG_NAME = clustersecretbase
 IMG_FQNAME = $(IMG_NAMESPACE)/$(IMG_NAME)
 IMG_VERSION = 0.0.5
 
-.PHONY: container arm-container push clean clean-arm
+.PHONY: container arm-container push arm-push clean clean-arm
 all: container push
 arm: arm-container arm-push
 clean: clean arm-clean
