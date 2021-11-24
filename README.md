@@ -70,7 +70,7 @@ To instal ClusterSecret operator we need to create (in this order):
 
  - RBAC resources (avoid if you are not running RBAC) to allow the operator to create/update/patch secrets: yaml/00_
  - Custom resource definition for the ClusterSecret resource: yaml/01_crd.yaml
- - The ClusterSecret operator itself: yaml/02_deployment.yaml
+ - The ClusterSecret operator itself: yaml/02_deployment.yaml For ARM architectures yaml/arm32v7/02_deployment.yam
  
  
 # quick start:
@@ -130,7 +130,30 @@ kopf run ./src/handlers.py --verbose
 
  Make sure to have the proper RBAC in place (`k apply -f yaml/00_rbac.yaml`) and also the CRD definition (`k apply -f yaml/01_crd.yaml`)
 
+# Build the images
 
+There is makefiles for this, you can clone this repo. edit the makefile and then run make.
+
+You will need the base image first and then the final image.
+Find the base one in the folder base-image (yes very original name)
+
+Running make will build and push for all arch's supported. 
+
+## x86
+
+```
+cd base-images && make all & cd ..
+make all
+```
+
+## ARM32v7 
+
+In case you want it for your raspberri py:
+
+```
+cd base-images && make arm & cd ..
+make arm
+```
 
  
 # Roadmap:
