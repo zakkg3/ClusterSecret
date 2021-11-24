@@ -15,6 +15,7 @@ matchNamespace:
 avoidNamespaces:
   - supersecret-ns
   - default
+  - kube-system
 data:
   tls.crt: MTIzNDU2Cg==
   tls.key: Nzg5MTAxMTIxMgo=
