@@ -174,16 +174,11 @@ docker.io/flag5/clustersecret:
 0.0.7_arm32: digest: sha256:ffac630417bd090c958c9facf50a31ba54e0b18c89ef52d8eec5c1326a5f20ad
 # Roadmap:
 
+Tag 0.0.8:
+
  - [] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
  
- - [x] set type of secret (ie tls)
- 
- - [] set annotations and labels
- 
-# to-do:
 
- - [] on_resume we have to refresh memory ("csec" touple). More info in docs/roadmap.md
- 
  
  * * *
  
@@ -192,4 +187,4 @@ docker.io/flag5/clustersecret:
  If you need support, start with the troubleshooting guide: Run it in debug mode.
  You can open issues and we will try to address them. 
 
- That said, if you have questions, or just want to establish contact, reach out to us one way or another. [https://flag5.com](https://flag5.com) 
+ That said, if you have questions, or just want to establish contact, reach out one way or another. [https://flag5.com](https://flag5.com) || nico at flag5.com
