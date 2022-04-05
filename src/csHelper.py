@@ -90,7 +90,7 @@ def create_secret(logger,namespace,body,v1=None):
         api_response = v1.create_namespaced_secret(namespace, body)
     except client.rest.ApiException as e:
         if e.reason == 'Conflict':
-            logger.warning(f"secret `{sec_name}` already exist in namesace '{namespace}'")
+            logger.info(f"secret `{sec_name}` already exist in namesace '{namespace}'")
             return 0
         logger.error(f'Can not create a secret, it is base64 encoded? data: {data}')
         logger.error(f'Kube exception {e}')
