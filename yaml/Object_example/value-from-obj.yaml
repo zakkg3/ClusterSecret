@@ -3,7 +3,7 @@ apiVersion: clustersecret.io/v1
 kind: ClusterSecret
 metadata:
   name: value-from
-  namespace: anothernamespace
+  namespace: clustersecret
   labels:
     somelabel: somevalue
   annotations:
@@ -18,8 +18,7 @@ type: kubernetes.io/dockerconfigjson
 data:
   valueFrom:
     secretKeyRef:
-            name: mysecret
+#it requires obj2.yaml first. 
+            name: global-secret2
             key: username
-            namespace: default
-  .dockerconfigjson: eyJhdXRocyI6eyJteS5kb2NrZXIucmVnaXN0cnkiOnsidXNlcm5hbWUiOiJhZG1pbnVzZXIiLCJwYXNzd29yZCI6ImFkbWlucGFzcyIsImF1dGgiOiJZV1J0YVc1MWMyVnlPbUZrYldsdWNHRnpjdz09In19fQ==
-# testdata= {"auths":{"my.docker.registry":{"username":"adminuser","password":"adminpass","auth":"YWRtaW51c2VyOmFkbWlucGFzcw=="}}}
+            namespace: clustersecret
