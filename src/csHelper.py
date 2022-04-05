@@ -1,3 +1,4 @@
+import kopf
 import re
 from kubernetes import client
 
