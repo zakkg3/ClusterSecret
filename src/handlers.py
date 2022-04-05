@@ -44,8 +44,13 @@ def on_field_data(old, new, body,name,logger=None, **_):
             api_version = 'v1'
             kind = 'Secret'
             data = new
-            body = client.V1Secret(api_version, data , kind, metadata, type = secret_type)
-            # response = v1.patch_namespaced_secret(name,ns,body)
+            body = client.V1Secret(
+                api_version=api_version,
+                data=data ,
+                kind=kind,
+                metadata=metadata,
+                type = secret_type
+            )
             response = v1.replace_namespaced_secret(name,ns,body)
             logger.debug(response)
     else:
