@@ -1,7 +1,7 @@
 IMG_NAMESPACE = flag5
 IMG_NAME = clustersecret
 IMG_FQNAME = $(IMG_NAMESPACE)/$(IMG_NAME)
-IMG_VERSION = 0.0.7
+IMG_VERSION = 0.0.8
 
 .PHONY: container push clean arm-container arm-push arm-clean
 all: container push
@@ -27,3 +27,7 @@ arm-push: arm-container
 
 arm-clean:
 	sudo docker rmi $(IMG_FQNAME):$(IMG_VERSION)_arm32
+
+beta:
+	sudo docker build -t $(IMG_FQNAME):$(IMG_VERSION)-beta .
+	sudo docker push $(IMG_FQNAME):$(IMG_VERSION)-beta
