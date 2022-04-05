@@ -22,6 +22,8 @@ spec:
               type: array
               items:
                 type: string
+            type:
+              type: string
             data:
               type: object
               x-kubernetes-preserve-unknown-fields: true
