@@ -46,6 +46,22 @@ def get_ns_list(logger,body,v1=None):
             matchedns.remove(ns)
 
     return matchedns
+
+def read_data_secret(logger,name,namespace,v1):
+    """Gets the data from the 'name' secret in namspace
+    """
+    data={}
+    logger.debug(f'Reading {name} from ns {namespace}')
+    try: 
+        secret = v1.read_namespaced_secret(name, namespace)
+        logger.debug(f'Obtained secret {secret}')
+        data = secret.data
+    except client.exceptions.ApiException as e:
+        logger.error(f'Error reading secret {e}')
+        if e == "404":
+            logger.error(f"Secret {name} in ns {namespace} not found!")
+        raise kopf.TemporaryError("Error reading secret")
+    return data
     
 def create_secret(logger,namespace,body,v1=None):
     """Creates a given secret on a given namespace
@@ -66,18 +82,21 @@ def create_secret(logger,namespace,body,v1=None):
     
     if 'valueFrom' in data:
         if len(data.keys()) > 1:
+            logger.error(f'Data keys with ValueFrom error: {data.keys()}  len {len(data.keys())}')
             raise kopf.TemporaryError("ValueFrom can not coexist with other keys in the data")
             
         try:
-            ns_from = data['ValueFrom']['namespace']
-            name_from = data['ValueFrom']['name']
+            ns_from = data['valueFrom']['secretKeyRef']['namespace']
+            name_from = data['valueFrom']['secretKeyRef']['name']
+            # key_from = data['ValueFrom']['secretKeyRef']['name']
+            # to-do specifie keys. for now. it will clone all.
+            logger.debug(f'Taking value from secret {name_from} from namespace {ns_from} - All keys')
+            data = read_data_secret(logger,name_from,ns_from,v1)
         except KeyError:
-            logger.error("Can not get Values from external secret")
-            # to-do keys_from
-        logger.debug(f'Take value from secret {name_from} from namespace {ns_from}')
-        # data = read_data_secret(name,namespace)
-        #here - doing the valuform thing. but first fix and update all.
-        
+            logger.error (f'ERROR reading data from remote secret = {data}')
+            raise kopf.TemporaryError("Can not get Values from external secret")
+
+    logger.debug(f'Going to create with data: {data}')
     secret_type = 'Opaque'
     if 'type' in body:
         secret_type = body['type']
