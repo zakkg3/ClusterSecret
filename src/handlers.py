@@ -1,5 +1,4 @@
 import kopf
-import re
 from kubernetes import client, config
 from csHelper import *
 
@@ -33,7 +32,14 @@ def on_delete(spec,uid,body,name,logger=None, **_):
 def on_field_data(old, new, body,name,logger=None, **_):
     logger.debug(f'Data changed: {old} -> {new}')
     if old is not None:
-        syncedns = body['status']['create_fn']['syncedns']
+        logger.debug(f'Updating Object body == {body}')
+
+        try:
+            syncedns = body['status']['create_fn']['syncedns']
+        except KeyError:
+            logger.error('No Synced or status Namespaces found')
+            syncedns=[]
+            
         v1 = client.CoreV1Api()
 
         secret_type = 'Opaque'
