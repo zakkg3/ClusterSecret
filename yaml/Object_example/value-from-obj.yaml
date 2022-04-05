@@ -13,7 +13,6 @@ matchNamespace:
 avoidNamespaces:
   - 'default'
   - 'kube-system'
-type: kubernetes.io/dockerconfigjson
 # as output in kubectl create secret docker-registry regkey --docker-server my.docker.registry --docker-username adminuser --docker-password adminpass -o yaml --dry-run
 data:
   valueFrom:
