@@ -19,5 +19,4 @@ data:
     secretKeyRef:
 #it requires obj2.yaml first. 
             name: global-secret2
-            key: username
             namespace: clustersecret
