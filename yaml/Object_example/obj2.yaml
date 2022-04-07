@@ -6,6 +6,7 @@ metadata:
   namespace: clustersecret
 matchNamespace:
   - 'cluster.*'
+  # it will be replicated in clustersecret namespace.
 data:
   username: YWRtaW4=
   password: MWYyZDFlMmU2N2Rm

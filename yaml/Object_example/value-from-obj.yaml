@@ -1,0 +1,22 @@
+# A demo custom resource for the Kopf example operators.
+apiVersion: clustersecret.io/v1
+kind: ClusterSecret
+metadata:
+  name: value-from
+  namespace: clustersecret
+  labels:
+    somelabel: somevalue
+  annotations:
+    someannotation: somevalue
+matchNamespace:
+  - '.*'
+avoidNamespaces:
+  - 'default'
+  - 'kube-system'
+# as output in kubectl create secret docker-registry regkey --docker-server my.docker.registry --docker-username adminuser --docker-password adminpass -o yaml --dry-run
+data:
+  valueFrom:
+    secretKeyRef:
+#it requires obj2.yaml first. 
+            name: global-secret2
+            namespace: clustersecret
