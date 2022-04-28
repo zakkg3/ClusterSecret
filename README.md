@@ -17,7 +17,7 @@ Any change on the ClusterSecret will update all related secrets. Deleting the Cl
 Here is how it looks like:
 
 ```yaml
-Kind: ClusterSecret
+kind: ClusterSecret
 apiVersion: clustersecret.io/v1
 metadata:
   namespace: clustersecret
