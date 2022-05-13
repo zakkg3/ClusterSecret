@@ -10,6 +10,8 @@ Global inter-namespace cluster secrets - Secrets that work across namespaces  - 
 ClusterSecret operator makes sure all the matching namespaces have the secret available. New namespaces, if they match the pattern, will also have the secret.
 Any change on the ClusterSecret will update all related secrets. Deleting the ClusterSecret deletes "child" secrets (all cloned secrets) too.
 
+Full documentation available at https://cs.flag5.com/
+
 <img src="https://github.com/zakkg3/ClusterSecret/blob/master/docs/clusterSecret.png" alt="Clustersecret diagram">
 
 ---
@@ -17,7 +19,7 @@ Any change on the ClusterSecret will update all related secrets. Deleting the Cl
 Here is how it looks like:
 
 ```yaml
-kind: ClusterSecret
+Kind: ClusterSecret
 apiVersion: clustersecret.io/v1
 metadata:
   namespace: clustersecret
@@ -112,29 +114,10 @@ data:
 
 This can be archived by changing the RBAC.
 You may want to replace https://github.com/zakkg3/ClusterSecret/blob/master/yaml/00_rbac.yaml#L43-L46
-for a new namespaced role and its correspondent rolebinding.
+for a new namespaced role and its correspondient rolebinding.
 
 Here is the official doc:
 https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-
-## Update a ClusterSecret object
-
-This will trigger the operator to also update all secrets that it matches.
-
-## Value From another secret.
-
-With this we can tell ClusterSecret to take the values from an existing secret.
-yaml/Object_example/value-from-obj.yaml have a working example. Note that you will need first to have the obj2.yaml applied (the source secret).
-
-```
-data:
-  valueFrom:
-    secretKeyRef:
-      name: <secre-name>
-      namespace: <source-namespace>
-```
-
-to-do is to specify keys or matched keys to only sync that ones. For now it will sync the whole secret.
 
 ## optional
 
@@ -194,7 +177,8 @@ docker.io/flag5/clustersecret:
 # Roadmap:
 
 Tag 0.0.8:
- - [X] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
+
+ - [] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
  
 
  
