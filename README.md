@@ -10,7 +10,7 @@ Global inter-namespace cluster secrets - Secrets that work across namespaces  - 
 ClusterSecret operator makes sure all the matching namespaces have the secret available. New namespaces, if they match the pattern, will also have the secret.
 Any change on the ClusterSecret will update all related secrets. Deleting the ClusterSecret deletes "child" secrets (all cloned secrets) too.
 
-Full documentation available at https://cs.flag5.com/
+Full documentation available at [https://clustersecret.io](https://clustersecret.io/)
 
 <img src="https://github.com/zakkg3/ClusterSecret/blob/master/docs/clusterSecret.png" alt="Clustersecret diagram">
 
@@ -71,14 +71,6 @@ For older kubernes (<1.19) use the image tag "0.0.6" in  yaml/02_deployment.yaml
 ```bash
 kubectl apply -f ./yaml
 ```
-
-## step by step
-
-To instal ClusterSecret operator we need to create (in this order):
-
- - RBAC resources (avoid if you are not running RBAC) to allow the operator to create/update/patch secrets: yaml/00_
- - Custom resource definition for the ClusterSecret resource: yaml/01_crd.yaml
- - The ClusterSecret operator itself: yaml/02_deployment.yaml || For **ARM architectures**: yaml/arm32v7/02_deployment.yam
  
  
 # quick start:
@@ -110,62 +102,7 @@ data:
   password: Nzg5MTAxMTIxMgo=
 ```
 
-# Limit ClusterSecret to certain namespaces.
 
-This can be archived by changing the RBAC.
-You may want to replace https://github.com/zakkg3/ClusterSecret/blob/master/yaml/00_rbac.yaml#L43-L46
-for a new namespaced role and its correspondient rolebinding.
-
-Here is the official doc:
-https://kubernetes.io/docs/reference/access-authn-authz/rbac/
-
-## optional
-
-overwrite the deployment command with kopf namespaces instead of the "-A" (all namespaces)
-
-# Debugging.
-
-
-**NOTE**: in **debug mode** object data (the secret) are sent to stdout, potentially logs are being collected by Loki / Elasticsearch or any log management platform -> **Not for production!**.
-
-Overwirte deployment entrypoint (Kubernetes `command`) from `kopf run /src/handlers.py` to `kopf run /src/handlers.py --verbose`
-
-# Dev: Run it in your terminal.
-
-For development you dont want to build/push/recreate pod every time. Instead we can run the operator locally:
-
-Once you have the config in place (kubeconfig) you can just install the requirementes (pip install /base-image/requirements.txt) and then run the operator from your machine (usefull for debbuging.)
-
-```bash
-kopf run ./src/handlers.py --verbose
-```
-
- Make sure to have the proper RBAC in place (`k apply -f yaml/00_rbac.yaml`) and also the CRD definition (`k apply -f yaml/01_crd.yaml`)
-
-# Build the images
-
-There is makefiles for this, you can clone this repo. edit the makefile and then run 'make all'.
-
-You will need the base image first and then the final image.
-Find the base one in the folder base-image (yes very original name)
-
-Running just 'make' builds and push for all arch's supported. 
-
-## x86
-
-```
-cd base-images && make all & cd ..
-make all
-```
-
-## ARM32v7 
-
-In case you want it for your raspberri py:
-
-```
-cd base-images && make arm & cd ..
-make arm
-```
 ## Digests
 
 latest = 0.0.7
