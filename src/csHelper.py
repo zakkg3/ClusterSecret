@@ -10,7 +10,7 @@ def get_ns_list(logger,body,v1=None):
         logger.debug('new client - fn get_ns_list')
     
     try:
-        matchNamespace = body.get('matchNamespace')
+        matchNamespace = body['matchNamespace']
     except KeyError:
         matchNamespace = '*'
         logger.debug("matching all namespaces.")
