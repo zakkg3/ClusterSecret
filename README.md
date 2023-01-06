@@ -116,7 +116,7 @@ docker.io/flag5/clustersecret:
 
 Tag 0.0.8:
 
- - [] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
+ - [ ] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
  
 
  
