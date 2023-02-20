@@ -1,0 +1,6 @@
+clustersecret:
+  clustersecret:
+    image:
+      repository: flag5/clustersecret
+      tag: 0.0.8-beta
+kubernetesClusterDomain: cluster.local
