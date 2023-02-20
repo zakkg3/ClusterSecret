@@ -6,7 +6,6 @@ metadata:
   labels:
     app: clustersecret
 spec:
-    matchLabels:
     selector:
       matchLabels:
         app: clustersecret
