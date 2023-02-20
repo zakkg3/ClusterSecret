@@ -20,7 +20,7 @@ Full documentation available at [https://clustersecret.io](https://clustersecret
 Here is how it looks like:
 
 ```yaml
-Kind: ClusterSecret
+kind: ClusterSecret
 apiVersion: clustersecret.io/v1
 metadata:
   namespace: clustersecret
