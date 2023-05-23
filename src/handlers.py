@@ -13,13 +13,7 @@ def on_delete(spec,uid,body,name,logger=None, **_):
     v1 = client.CoreV1Api()
     for ns in syncedns:
         logger.info(f'deleting secret {name} from namespace {ns}')
-        try:
-            v1.delete_namespaced_secret(name,ns)
-        except client.rest.ApiException as e:
-            if e.status == 404:
-                logger.warning(f"The namespace {ns} may not exist anymore: Not found")
-            else:
-                logger.warning(f" Something wierd deleting the secret: {e}")
+        delete_secret(logger, ns, name, v1)
         
     #delete also from memory: prevent syncing with new namespaces
     try:
@@ -27,6 +21,42 @@ def on_delete(spec,uid,body,name,logger=None, **_):
         logger.debug(f"csec {uid} deleted from memory ok")
     except KeyError as k:
         logger.info(f" This csec were not found in memory, maybe it was created in another run: {k}")
+
+@kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='matchNamespace')
+def on_field_match_namespace(old, new, name, namespace, body, uid, logger=None, **_):
+    logger.debug(f'Namespaces changed: {old} -> {new}')
+
+    if old is not None:
+        logger.debug(f'Updating Object body == {body}')
+
+        try:
+            syncedns = body['status']['create_fn']['syncedns']
+        except KeyError:
+            logger.error('No Synced or status Namespaces found')
+            syncedns = []
+
+        v1 = client.CoreV1Api()
+        updated_matched = get_ns_list(logger, body, v1)
+        to_add = set(updated_matched).difference(set(syncedns))
+        to_remove = set(syncedns).difference(set(updated_matched))
+
+        for secret_namespace in to_add:
+            create_secret(logger, secret_namespace, body)
+        for secret_namespace in to_remove:
+            delete_secret(logger, secret_namespace, name)
+
+        # Store status in memory
+        csecs[uid] = {
+            'body': body,
+            'syncedns': updated_matched
+        }
+
+        # Patch synced_ns field
+        logger.debug(f'Patching clustersecret {name} in namespace {namespace}')
+        patch_clustersecret_status(logger, namespace, name, {'create_fn': {'syncedns': updated_matched}})
+    else:
+        logger.debug('This is a new object')
+
 
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='data')
 def on_field_data(old, new, body,name,logger=None, **_):
