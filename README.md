@@ -69,10 +69,21 @@ For older kubernes (<1.19) use the image tag "0.0.6" in  yaml/02_deployment.yaml
 
 ## tl;dr install
 
+# Using the official helm chart
+
 ```bash
+helm repo add clutersecret https://charts.clustersecret.io/
+helm install cluster-secret clutersecret/cluster-secret --version 0.1.0
+```
+
+# kubectl
+
+clone the repo and apply
+
+```bash
+cd ClusterSecret
 kubectl apply -f ./yaml
 ```
- 
  
 # quick start:
 
