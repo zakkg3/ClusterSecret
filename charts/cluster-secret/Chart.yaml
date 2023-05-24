@@ -7,3 +7,6 @@ version: 0.1.0
 sources:
 - https://github.com/zakkg3/ClusterSecret
 appVersion: "0.8.0"
+maintainers:
+- email: zakkg3@gmail.com
+  name: zakkg3
