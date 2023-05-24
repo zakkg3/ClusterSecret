@@ -115,16 +115,6 @@ data:
 ```
 
 
-## Digests
-
-latest = 0.0.7
-
-docker.io/flag5/clustersecret:
-
-0.0.7 digest: sha256:c8dffeefbd3c8c54af67be81cd769e3c18263920729946b75f098065318eddb1
-
-0.0.7_arm32: digest: sha256:ffac630417bd090c958c9facf50a31ba54e0b18c89ef52d8eec5c1326a5f20ad
-
 ## Known bugs:
  
  #48 #59
