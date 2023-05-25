@@ -1,5 +1,5 @@
 # ClusterSecret
-![CI](https://github.com/zakkg3/ClusterSecret/workflows/CI/badge.svg) [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4283/badge)](https://bestpractices.coreinfrastructure.org/projects/4283)[![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/clutersecret)](https://artifacthub.io/packages/search?repo=clutersecret)
+![CI](https://github.com/zakkg3/ClusterSecret/workflows/CI/badge.svg) [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4283/badge)](https://bestpractices.coreinfrastructure.org/projects/4283) [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html) [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/clutersecret)](https://artifacthub.io/packages/search?repo=clutersecret)
 
 ---
 
@@ -63,16 +63,27 @@ Clustersecrets automates this. It keep track of any modification in your secret 
 
 ## Requirements
 
-Current version 0.0.7 is tested for Kubernetes >= 1.19 up to 1.25
+Current version 0.0.8 is tested for Kubernetes >= 1.19 up to 1.27.1
 
-For older kubernes (<1.19) use the image tag "0.0.6" in  yaml/02_deployment.yaml
+For older kubernetes (<1.19) use the image tag "0.0.6" in your helm values file.
 
-## tl;dr install
+## Install
+
+# Using the official helm chart
 
 ```bash
+helm repo add clutersecret https://charts.clustersecret.io/
+helm install cluster-secret clutersecret/cluster-secret --version 0.1.0
+```
+
+# with just kubectl
+
+clone the repo and apply
+
+```bash
+cd ClusterSecret
 kubectl apply -f ./yaml
 ```
- 
  
 # quick start:
 
@@ -104,27 +115,23 @@ data:
 ```
 
 
-## Digests
-
-latest = 0.0.7
-
-docker.io/flag5/clustersecret:
-
-0.0.7 digest: sha256:c8dffeefbd3c8c54af67be81cd769e3c18263920729946b75f098065318eddb1
-
-0.0.7_arm32: digest: sha256:ffac630417bd090c958c9facf50a31ba54e0b18c89ef52d8eec5c1326a5f20ad
-
 ## Known bugs:
  
  #48 #59
 
 # Roadmap:
 
-Tag 0.0.8:
+## Tag 0.0.9:
+
  - [x] Fix #59
- - [ ] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
- - [ ] Fix bugs #48 
+ - [x] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
+ - [ ] Fix bug #48 
  
+ 
+## Tag 0.1.0 :
+
+- [ ] react to changes on source secret. #36
+- [ ] react on changes on data on clustersecret. #48 
 
  
  * * *

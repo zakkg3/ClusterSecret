@@ -3,12 +3,19 @@ entries:
   cluster-secret:
   - apiVersion: v2
     appVersion: 0.8.0
-    created: "2023-05-24T19:10:36.2682+02:00"
-    description: A Helm chart for Kubernetes
-    digest: 2893985eb3765295aba84528fc7f47bce4a7892b867ac9cb8595e6b7c7977890
+    created: "2023-05-24T21:26:49.32438+02:00"
+    description: ClusterSecret Operator
+    digest: 030f57727851526c0faa73e20a7d5efbf1e22264ad6e229670e9c5645ba1e845
+    icon: https://clustersecret.io/assets/csninjasmall.png
+    kubeVersion: '>= 1.16.0-0'
+    maintainers:
+    - email: zakkg3@gmail.com
+      name: zakkg3
     name: cluster-secret
+    sources:
+    - https://github.com/zakkg3/ClusterSecret
     type: application
     urls:
     - cluster-secret-0.1.0.tgz
     version: 0.1.0
-generated: "2023-05-24T19:10:36.266997+02:00"
+generated: "2023-05-24T21:26:49.323843+02:00"
