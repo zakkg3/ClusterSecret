@@ -133,7 +133,8 @@ data:
  
  
 ## Tag 0.1.0 :
-
+- [ ] update base-image to latest
+- [ ] update kopf package to latest
 - [ ] react to changes on source secret. #36
 - [ ] add source from Externalsecrets or other providers. 
 
