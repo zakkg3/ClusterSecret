@@ -101,6 +101,15 @@ def on_field_data(old, new, body,name,logger=None, **_):
 async def create_fn(spec,uid,logger=None,body=None,**kwargs):
     v1 = client.CoreV1Api()
     
+    # warning this is debug!
+    logger.debug("""
+      #########################################################################
+      # DEBUG MODE ON - NOT FOR PRODUCTION                                    #
+      # On this mode secrets are leaked to stdout, this is not safe!. NO-GO ! #
+      #########################################################################
+    """
+    )
+    
     #get all ns matching.
     matchedns = get_ns_list(logger,body,v1)
         
