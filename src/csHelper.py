@@ -89,7 +89,8 @@ def read_data_secret(logger,name,namespace,v1):
         logger.debug(f'Obtained secret {secret}')
         data = secret.data
     except client.exceptions.ApiException as e:
-        logger.error(f'Error reading secret {e}')
+        logger.error('Error reading secret')
+        logger.debug(f'error: {e}')
         if e == "404":
             logger.error(f"Secret {name} in ns {namespace} not found!")
         raise kopf.TemporaryError("Error reading secret")
@@ -129,8 +130,8 @@ def create_secret(logger,namespace,body,v1=None):
     
     if 'valueFrom' in data:
         if len(data.keys()) > 1:
-            logger.error(f'Data keys with ValueFrom error, enable debug for more details')
-            logger.debug(f'Data keys with ValueFrom error: {data.keys()}  len {len(data.keys())}')
+            logger.error('Data keys with ValueFrom error, enable debug for more details')
+            logger.debug(f'keys: {data.keys()}  len {len(data.keys())}')
             raise kopf.TemporaryError("ValueFrom can not coexist with other keys in the data")
             
         try:
