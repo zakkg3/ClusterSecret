@@ -2,5 +2,6 @@ clustersecret:
   clustersecret:
     image:
       repository: flag5/clustersecret
-      tag: 0.0.8-beta
+      tag: 0.0.9
+      # use tag__arm32 for ARM builds
 kubernetesClusterDomain: cluster.local

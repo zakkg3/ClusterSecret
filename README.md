@@ -6,10 +6,13 @@
 ## Kubernetes ClusterSecret 
 [*clustersecret.io*](https://clustersecret.io/)
 
-Global inter-namespace cluster secrets - Secrets that work across namespaces  - Clusterwide secrets
+Cluster wide secrets
 
-ClusterSecret operator makes sure all the matching namespaces have the secret available. New namespaces, if they match the pattern, will also have the secret.
-Any change on the ClusterSecret will update all related secrets. Deleting the ClusterSecret deletes "child" secrets (all cloned secrets) too.
+ClusterSecret operator makes sure all the matching namespaces have the secret available and up to date.
+
+ - New namespaces, if they match the pattern, will also have the secret.
+ - Any change on the ClusterSecret will update all related secrets. Including changing the match pattern. 
+ - Deleting the ClusterSecret deletes "child" secrets (all cloned secrets) too.
 
 Full documentation available at [https://clustersecret.io](https://clustersecret.io/)
 
@@ -63,9 +66,10 @@ Clustersecrets automates this. It keep track of any modification in your secret 
 
 ## Requirements
 
-Current version 0.0.8 is tested for Kubernetes >= 1.19 up to 1.27.1
+Current version `0.0.9` is tested for Kubernetes >= 1.19 up to 1.27.1
+For ARM architectures user `0.0.9_arm32` tag
 
-For older kubernetes (<1.19) use the image tag "0.0.6" in your helm values file.
+For older kubernetes (<1.19) use the image tag `0.0.6` in your helm values file.
 
 ## Install
 
@@ -73,7 +77,7 @@ For older kubernetes (<1.19) use the image tag "0.0.6" in your helm values file.
 
 ```bash
 helm repo add clutersecret https://charts.clustersecret.io/
-helm install cluster-secret clutersecret/cluster-secret --version 0.1.0
+helm install clustersecret clutersecret/ClusterSecret --version 0.1.1 -n clustersecret --create-namespace
 ```
 
 # with just kubectl
@@ -125,13 +129,14 @@ data:
 
  - [x] Fix #59
  - [x] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
- - [ ] Fix bug #48 
+ - [x] Fix bug #48 
  
  
 ## Tag 0.1.0 :
-
+- [ ] update base-image to latest
+- [ ] update kopf package to latest
 - [ ] react to changes on source secret. #36
-- [ ] react on changes on data on clustersecret. #48 
+- [ ] add source from Externalsecrets or other providers. 
 
  
  * * *
@@ -142,3 +147,5 @@ data:
  You can open issues and we will try to address them. 
 
  That said, if you have questions, or just want to establish contact, reach out one way or another. [https://flag5.com](https://flag5.com) || nico at flag5.com
+ 
+ Global inter-namespace cluster secrets - Secrets that work across namespaces  - Cluster wide secrets
