@@ -66,9 +66,10 @@ Clustersecrets automates this. It keep track of any modification in your secret 
 
 ## Requirements
 
-Current version 0.0.8 is tested for Kubernetes >= 1.19 up to 1.27.1
+Current version `0.0.9` is tested for Kubernetes >= 1.19 up to 1.27.1
+For ARM architectures user `0.0.9_arm32` tag
 
-For older kubernetes (<1.19) use the image tag "0.0.6" in your helm values file.
+For older kubernetes (<1.19) use the image tag `0.0.6` in your helm values file.
 
 ## Install
 
@@ -76,7 +77,7 @@ For older kubernetes (<1.19) use the image tag "0.0.6" in your helm values file.
 
 ```bash
 helm repo add clutersecret https://charts.clustersecret.io/
-helm install cluster-secret clutersecret/cluster-secret --version 0.1.0
+helm install clustersecret clutersecret/ClusterSecret --version 0.1.1 -n clustersecret --create-namespace
 ```
 
 # with just kubectl
