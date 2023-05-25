@@ -6,10 +6,13 @@
 ## Kubernetes ClusterSecret 
 [*clustersecret.io*](https://clustersecret.io/)
 
-Global inter-namespace cluster secrets - Secrets that work across namespaces  - Clusterwide secrets
+Cluster wide secrets
 
-ClusterSecret operator makes sure all the matching namespaces have the secret available. New namespaces, if they match the pattern, will also have the secret.
-Any change on the ClusterSecret will update all related secrets. Deleting the ClusterSecret deletes "child" secrets (all cloned secrets) too.
+ClusterSecret operator makes sure all the matching namespaces have the secret available and up to date.
+
+ - New namespaces, if they match the pattern, will also have the secret.
+ - Any change on the ClusterSecret will update all related secrets. Including changing the match pattern. 
+ - Deleting the ClusterSecret deletes "child" secrets (all cloned secrets) too.
 
 Full documentation available at [https://clustersecret.io](https://clustersecret.io/)
 
@@ -125,13 +128,13 @@ data:
 
  - [x] Fix #59
  - [x] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
- - [ ] Fix bug #48 
+ - [x] Fix bug #48 
  
  
 ## Tag 0.1.0 :
 
 - [ ] react to changes on source secret. #36
-- [ ] react on changes on data on clustersecret. #48 
+- [ ] add source from Externalsecrets or other providers. 
 
  
  * * *
@@ -142,3 +145,5 @@ data:
  You can open issues and we will try to address them. 
 
  That said, if you have questions, or just want to establish contact, reach out one way or another. [https://flag5.com](https://flag5.com) || nico at flag5.com
+ 
+ Global inter-namespace cluster secrets - Secrets that work across namespaces  - Cluster wide secrets
