@@ -107,7 +107,8 @@ def delete_secret(logger,namespace,name,v1=None):
         if e.status == 404:
             logger.warning(f"The namespace {namespace} may not exist anymore: Not found")
         else:
-            logger.warning(f" Something weird deleting the secret: {e}")
+            logger.warning(" Something weird deleting the secret")
+            logger.debug(f"details: {e}")
 
 def create_secret(logger,namespace,body,v1=None):
     """Creates a given secret on a given namespace
@@ -128,7 +129,8 @@ def create_secret(logger,namespace,body,v1=None):
     
     if 'valueFrom' in data:
         if len(data.keys()) > 1:
-            logger.error(f'Data keys with ValueFrom error: {data.keys()}  len {len(data.keys())}')
+            logger.error(f'Data keys with ValueFrom error, enable debug for more details')
+            logger.debug(f'Data keys with ValueFrom error: {data.keys()}  len {len(data.keys())}')
             raise kopf.TemporaryError("ValueFrom can not coexist with other keys in the data")
             
         try:
@@ -139,7 +141,8 @@ def create_secret(logger,namespace,body,v1=None):
             logger.debug(f'Taking value from secret {name_from} from namespace {ns_from} - All keys')
             data = read_data_secret(logger,name_from,ns_from,v1)
         except KeyError:
-            logger.error (f'ERROR reading data from remote secret = {data}')
+            logger.error (f'ERROR reading data from remote secret, enable debug for more details')
+            logger.debug (f'Deta details: {data}')
             raise kopf.TemporaryError("Can not get Values from external secret")
 
     logger.debug(f'Going to create with data: {data}')
@@ -158,7 +161,8 @@ def create_secret(logger,namespace,body,v1=None):
         if e.reason == 'Conflict':
             logger.info(f"secret `{sec_name}` already exist in namespace '{namespace}'")
             return 0
-        logger.error(f'Can not create a secret, it is base64 encoded? data: {data}')
-        logger.error(f'Kube exception {e}')
+        logger.error(f'Can not create a secret, it is base64 encoded? enable debug for details')
+        logger.debug(f'data: {data}')
+        logger.debug(f'Kube exception {e}')
         return 1
     return 0
