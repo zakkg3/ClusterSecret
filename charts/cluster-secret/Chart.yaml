@@ -1,5 +1,5 @@
 apiVersion: v2
-name: cluster-secret
+name: ClusterSecret
 description: ClusterSecret Operator
 kubeVersion: '>= 1.16.0-0'
 type: application

@@ -1,26 +1,27 @@
 apiVersion: v1
 entries:
-  cluster-secret:
+  ClusterSecret:
   - apiVersion: v2
     appVersion: 0.0.9
-    created: "2023-05-25T18:08:13.331608+02:00"
+    created: "2023-05-25T18:14:52.803089+02:00"
     description: ClusterSecret Operator
-    digest: c8a06e78bb92b61a79e0eb5b6f81fe98a74157c7ad39faf467a3739718510f35
+    digest: babb5145d5b2a7b480cb5f133854fef50561fe5645d06cf3ce81cb1489e97ba2
     icon: https://clustersecret.io/assets/csninjasmall.png
     kubeVersion: '>= 1.16.0-0'
     maintainers:
     - email: zakkg3@gmail.com
       name: zakkg3
-    name: cluster-secret
+    name: ClusterSecret
     sources:
     - https://github.com/zakkg3/ClusterSecret
     type: application
     urls:
-    - cluster-secret-0.1.1.tgz
+    - ClusterSecret-0.1.1.tgz
     version: 0.1.1
+  cluster-secret:
   - apiVersion: v2
     appVersion: 0.8.0
-    created: "2023-05-25T18:08:13.331144+02:00"
+    created: "2023-05-25T18:14:52.803801+02:00"
     description: ClusterSecret Operator
     digest: 030f57727851526c0faa73e20a7d5efbf1e22264ad6e229670e9c5645ba1e845
     icon: https://clustersecret.io/assets/csninjasmall.png
@@ -35,4 +36,4 @@ entries:
     urls:
     - cluster-secret-0.1.0.tgz
     version: 0.1.0
-generated: "2023-05-25T18:08:13.328578+02:00"
+generated: "2023-05-25T18:14:52.802591+02:00"
