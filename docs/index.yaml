@@ -3,9 +3,9 @@ entries:
   ClusterSecret:
   - apiVersion: v2
     appVersion: 0.0.9
-    created: "2023-05-25T18:22:13.043992+02:00"
+    created: "2023-05-25T20:46:14.183011+02:00"
     description: ClusterSecret Operator
-    digest: 0614f789838c979c505575ea9ae021059fbf1d3eb08a8edc281d384b5d1cdbc3
+    digest: 35f8969476673fe218f71e6cd0a8c2eda7cf7795c7fd427cee2daa386f95ffe8
     icon: https://clustersecret.io/assets/csninjasmall.png
     kubeVersion: '>= 1.16.0-0'
     maintainers:
@@ -21,7 +21,7 @@ entries:
   cluster-secret:
   - apiVersion: v2
     appVersion: 0.8.0
-    created: "2023-05-25T18:22:13.044723+02:00"
+    created: "2023-05-25T20:46:14.184014+02:00"
     description: ClusterSecret Operator
     digest: 030f57727851526c0faa73e20a7d5efbf1e22264ad6e229670e9c5645ba1e845
     icon: https://clustersecret.io/assets/csninjasmall.png
@@ -36,4 +36,4 @@ entries:
     urls:
     - cluster-secret-0.1.0.tgz
     version: 0.1.0
-generated: "2023-05-25T18:22:13.043451+02:00"
+generated: "2023-05-25T20:46:14.18201+02:00"
