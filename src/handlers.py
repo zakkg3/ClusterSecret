@@ -40,6 +40,8 @@ def on_field_match_namespace(old, new, name, namespace, body, uid, logger=None, 
         to_add = set(updated_matched).difference(set(syncedns))
         to_remove = set(syncedns).difference(set(updated_matched))
 
+        logger.debug(f'Add secret to namespaces: {to_add}, remove from: {to_remove}')
+
         for secret_namespace in to_add:
             create_secret(logger, secret_namespace, body)
         for secret_namespace in to_remove:
