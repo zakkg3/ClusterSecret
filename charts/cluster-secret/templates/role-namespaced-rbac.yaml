@@ -34,3 +34,10 @@ rules:
   - create
   - update
   - patch
+- apiGroups:
+  - clustersecret.io
+  resources:
+  - clustersecrets
+  verbs:
+  - get
+  - patch
