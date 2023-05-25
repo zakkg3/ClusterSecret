@@ -31,3 +31,12 @@ arm-clean:
 beta:
 	sudo docker build -t $(IMG_FQNAME):$(IMG_VERSION)-beta .
 	sudo docker push $(IMG_FQNAME):$(IMG_VERSION)-beta
+
+test-env:
+	podman machine start
+	KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster
+	helm install clustersecret ./charts/cluster-secret -n clustersecret --create-namespace
+
+stop-test-env:
+	KIND_EXPERIMENTAL_PROVIDER=podman kind delete cluster
+	podman machine stop
