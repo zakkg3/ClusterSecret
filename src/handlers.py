@@ -39,6 +39,7 @@ def on_field_match_namespace(old, new, name, namespace, body, uid, logger=None, 
         updated_matched = get_ns_list(logger, body, v1)
         to_add = set(updated_matched).difference(set(syncedns))
         to_remove = set(syncedns).difference(set(updated_matched))
+logger.debug(f'To add: {to_add}, To remove: {to_remove}')
 
         for secret_namespace in to_add:
             create_secret(logger, secret_namespace, body)
