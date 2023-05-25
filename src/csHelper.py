@@ -2,6 +2,38 @@ import kopf
 import re
 from kubernetes import client
 
+def patch_clustersecret_status(logger, namespace, name, new_status, v1=None):
+    """Patch the status of a given clustersecret object
+    """
+    v1 = v1 or client.CustomObjectsApi()
+
+    group = 'clustersecret.io'
+    version = 'v1'
+    plural = 'clustersecrets'
+
+    # Retrieve the clustersecret object
+    clustersecret = v1.get_namespaced_custom_object(
+        group=group,
+        version=version,
+        namespace=namespace,
+        plural=plural,
+        name=name
+    )
+
+    # Update the status field
+    clustersecret['status'] = new_status
+    logger.debug(f'Updated clustersecret manifest: {clustersecret}')
+
+    # Perform a patch operation to update the custom resource
+    v1.patch_namespaced_custom_object(
+        group=group,
+        version=version,
+        namespace=namespace,
+        plural=plural,
+        name=name,
+        body=clustersecret
+    )
+
 def get_ns_list(logger,body,v1=None):
     """Returns a list of namespaces where the secret should be matched
     """
@@ -33,13 +65,13 @@ def get_ns_list(logger,body,v1=None):
         for ns in nss:
             if re.match(matchns, ns.metadata.name):
                 matchedns.append(ns.metadata.name)
-                logger.debug(f'Matched namespaces: {ns.metadata.name} matchpathern: {matchns}')
+                logger.debug(f'Matched namespaces: {ns.metadata.name} match pattern: {matchns}')
     if avoidNamespaces:
         for avoidns in avoidNamespaces:
             for ns in nss:
                 if re.match(avoidns, ns.metadata.name):
                     avoidedns.append(ns.metadata.name)
-                    logger.debug(f'Skipping namespaces: {ns.metadata.name} avoidpatrn: {avoidns}')  
+                    logger.debug(f'Skipping namespaces: {ns.metadata.name} avoid pattern: {avoidns}')  
     # purge
     for ns in matchedns.copy():
         if ns in avoidedns:
@@ -48,7 +80,7 @@ def get_ns_list(logger,body,v1=None):
     return matchedns
 
 def read_data_secret(logger,name,namespace,v1):
-    """Gets the data from the 'name' secret in namspace
+    """Gets the data from the 'name' secret in namespace
     """
     data={}
     logger.debug(f'Reading {name} from ns {namespace}')
@@ -57,12 +89,28 @@ def read_data_secret(logger,name,namespace,v1):
         logger.debug(f'Obtained secret {secret}')
         data = secret.data
     except client.exceptions.ApiException as e:
-        logger.error(f'Error reading secret {e}')
+        logger.error('Error reading secret')
+        logger.debug(f'error: {e}')
         if e == "404":
             logger.error(f"Secret {name} in ns {namespace} not found!")
         raise kopf.TemporaryError("Error reading secret")
     return data
-    
+
+def delete_secret(logger,namespace,name,v1=None):
+    """Deletes a given secret from a given namespace
+    """
+    v1 = v1 or client.CoreV1Api()
+
+    logger.info(f'deleting secret {name} from namespace {namespace}')
+    try:
+        v1.delete_namespaced_secret(name,namespace)
+    except client.rest.ApiException as e:
+        if e.status == 404:
+            logger.warning(f"The namespace {namespace} may not exist anymore: Not found")
+        else:
+            logger.warning(" Something weird deleting the secret")
+            logger.debug(f"details: {e}")
+
 def create_secret(logger,namespace,body,v1=None):
     """Creates a given secret on a given namespace
     """
@@ -82,7 +130,8 @@ def create_secret(logger,namespace,body,v1=None):
     
     if 'valueFrom' in data:
         if len(data.keys()) > 1:
-            logger.error(f'Data keys with ValueFrom error: {data.keys()}  len {len(data.keys())}')
+            logger.error('Data keys with ValueFrom error, enable debug for more details')
+            logger.debug(f'keys: {data.keys()}  len {len(data.keys())}')
             raise kopf.TemporaryError("ValueFrom can not coexist with other keys in the data")
             
         try:
@@ -93,7 +142,8 @@ def create_secret(logger,namespace,body,v1=None):
             logger.debug(f'Taking value from secret {name_from} from namespace {ns_from} - All keys')
             data = read_data_secret(logger,name_from,ns_from,v1)
         except KeyError:
-            logger.error (f'ERROR reading data from remote secret = {data}')
+            logger.error (f'ERROR reading data from remote secret, enable debug for more details')
+            logger.debug (f'Deta details: {data}')
             raise kopf.TemporaryError("Can not get Values from external secret")
 
     logger.debug(f'Going to create with data: {data}')
@@ -110,9 +160,10 @@ def create_secret(logger,namespace,body,v1=None):
         api_response = v1.create_namespaced_secret(namespace, body)
     except client.rest.ApiException as e:
         if e.reason == 'Conflict':
-            logger.info(f"secret `{sec_name}` already exist in namesace '{namespace}'")
+            logger.info(f"secret `{sec_name}` already exist in namespace '{namespace}'")
             return 0
-        logger.error(f'Can not create a secret, it is base64 encoded? data: {data}')
-        logger.error(f'Kube exception {e}')
+        logger.error(f'Can not create a secret, it is base64 encoded? enable debug for details')
+        logger.debug(f'data: {data}')
+        logger.debug(f'Kube exception {e}')
         return 1
     return 0
