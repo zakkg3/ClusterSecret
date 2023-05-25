@@ -43,3 +43,7 @@ test-env:
 stop-test-env:
 	KIND_EXPERIMENTAL_PROVIDER=podman kind delete cluster
 	podman machine stop
+
+chart-update:
+	helm package charts/cluster-secret/ -d docs/
+	helm repo index ./docs
