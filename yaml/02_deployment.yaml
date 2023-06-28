@@ -20,11 +20,17 @@ spec:
         containers:
         - name: clustersecret
           image: flag5/clustersecret:0.0.9
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            periodSeconds: 120
           # imagePullPolicy: Always
           # Uncomment next lines for debug:
           # command:
           #   - "kopf"
           #   - "run"
+          #   - "--liveness=http://0.0.0.0:8080/healthz"
           #   - "-A"
           #   - "/src/handlers.py"
           #   - "--verbose"
