@@ -1,3 +1,5 @@
+import logging
+
 import kopf
 import re
 from kubernetes import client
@@ -110,6 +112,19 @@ def delete_secret(logger,namespace,name,v1=None):
         else:
             logger.warning(" Something weird deleting the secret")
             logger.debug(f"details: {e}")
+
+
+def secret_exist(logger: logging.Logger, name: str, namespace: str, v1=None) -> bool:
+    v1 = v1 or client.CoreV1Api()
+
+    try:
+        v1.read_namespaced_secret(name, namespace)
+        return True
+    except client.exceptions.ApiException as e:
+        if e.status == 404:
+            return False
+        logger.warning(f'Cannot read the secret {e}.')
+        raise kopf.TemporaryError(f'Error reading secret {e}')
 
 def create_secret(logger,namespace,body,v1=None):
     """Creates a given secret on a given namespace

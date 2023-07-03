@@ -86,12 +86,16 @@ def on_field_data(old, new, body,name,logger=None, **_):
             data = new
             body = client.V1Secret(
                 api_version=api_version,
-                data=data ,
+                data=data,
                 kind=kind,
                 metadata=metadata,
-                type = secret_type
+                type=secret_type
             )
-            response = v1.replace_namespaced_secret(name,ns,body)
+            # Ensuring the secret still exist.
+            if secret_exist(logger=logger, name=name,  namespace=ns, v1=client):
+                response = v1.replace_namespaced_secret(name=name, namespace=ns, body=body)
+            else:
+                response = v1.create_namespaced_secret(namespace=ns, body=body)
             logger.debug(response)
     else:
         logger.debug('This is a new object')
