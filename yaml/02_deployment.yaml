@@ -17,6 +17,9 @@ spec:
         serviceAccountName: clustersecret-account
         # imagePullSecrets:
         # - name: regcred
+        env:
+          - name: CLUSTER_SECRET_VERSION
+            value: "v0.0.10"
         containers:
         - name: clustersecret
           image: flag5/clustersecret:0.0.9
