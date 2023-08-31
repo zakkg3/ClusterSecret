@@ -33,12 +33,12 @@ beta:
 	sudo docker push $(IMG_FQNAME):$(IMG_VERSION)-beta
 
 install:
-	helm install clustersecret ./charts/Clustersecret -n clustersecret --create-namespace
+	helm install clustersecret ./charts/cluster-secret -n clustersecret --create-namespace
 
 test-env:
 	podman machine start
 	KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster
-	helm install clustersecret ./charts/clustersecret -n clustersecret --create-namespace
+	helm install clustersecret ./charts/cluster-secret -n clustersecret --create-namespace
 
 stop-test-env:
 	KIND_EXPERIMENTAL_PROVIDER=podman kind delete cluster
