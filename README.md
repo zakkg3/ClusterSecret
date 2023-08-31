@@ -77,7 +77,7 @@ For older kubernetes (<1.19) use the image tag `0.0.6` in your helm values file.
 
 ```bash
 helm repo add clutersecret https://charts.clustersecret.io/
-helm install clustersecret clutersecret/ClusterSecret --version 0.1.1 -n clustersecret --create-namespace
+helm install clustersecret clutersecret/ClusterSecret --version 0.2.1 -n clustersecret --create-namespace
 ```
 
 # with just kubectl
