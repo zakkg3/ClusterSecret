@@ -45,5 +45,5 @@ stop-test-env:
 	podman machine stop
 
 chart-update:
-	helm package charts/clustersecret/ -d docs/
+	helm package charts/cluster-secret/ -d docs/
 	helm repo index ./docs
