@@ -70,11 +70,11 @@ def get_ns_list(
     """
     v1 = v1 or client.CoreV1Api()
 
-    matchNamespace = '*' if 'matchNamespace' not in body else body['matchNamespace']
+    matchNamespace = '.*' if 'matchNamespace' not in body else body['matchNamespace']
     logger.debug(f'Matching namespaces: {matchNamespace}')
 
     if matchNamespace is None:  # if delted key (issue 26)
-        matchNamespace = '*'
+        matchNamespace = '.*'
 
     try:
         avoidNamespaces = body.get('avoidNamespaces')
