@@ -3,4 +3,4 @@ ADD /src /src
 
 RUN adduser --system --no-create-home secretmonkey
 USER secretmonkey
-CMD kopf run -A /src/handlers.py
+CMD kopf run --liveness=http://0.0.0.0:8080/healthz -A /src/handlers.py
