@@ -7,5 +7,5 @@ clustersecret:
     # If Clustersecret is about to create a secret and then it founds it exists:
     # Default is to ignore it. (to not loose any unintentional data) 
     # It can also reeplace it. Just uncommenting next line.
-    #replace_existing='true'
+    #replace_existing: 'true'
 kubernetesClusterDomain: cluster.local
