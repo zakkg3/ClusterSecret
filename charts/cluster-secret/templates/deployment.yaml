@@ -27,8 +27,11 @@ spec:
       - env:
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ .Values.kubernetesClusterDomain }}
-        image: {{ .Values.clustersecret.clustersecret.image.repository }}:{{ .Values.clustersecret.clustersecret.image.tag
-          | default .Chart.AppVersion }}
+        image: {{ .Values.clustersecret.clustersecret.image.repository }}:{{ .Values.clustersecret.clustersecret.image.tag | default .Chart.AppVersion }}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
         name: clustersecret
         resources: {}
       serviceAccountName: {{ include "cluster-secret.fullname" . }}-account
