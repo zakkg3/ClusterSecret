@@ -27,6 +27,8 @@ spec:
       - env:
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ .Values.kubernetesClusterDomain }}
+        - name: CLUSTER_SECRET_VERSION
+          value: {{ .Chart.AppVersion | quote }}
         image: {{ .Values.clustersecret.clustersecret.image.repository }}:{{ .Values.clustersecret.clustersecret.image.tag
           | default .Chart.AppVersion }}
         name: clustersecret

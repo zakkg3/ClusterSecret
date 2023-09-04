@@ -17,6 +17,11 @@ def get_version() -> str:
     return os.getenv('CLUSTER_SECRET_VERSION', '0')
 
 
+def get_replace_existing() -> bool:
+    replace_existing = os.getenv('REPLACE_EXISTING', 'false')
+    return replace_existing.lower() == 'true'
+
+
 def patch_clustersecret_status(
         logger: logging.Logger,
         namespace: str,
@@ -241,7 +246,12 @@ def sync_secret(
             return
 
         if metadata.get(CREATE_BY_ANNOTATION) is None:
-            logger.info(f"secret `{sec_name}` already exist in namespace '{namespace}' and is not managed by ClusterSecret")
+            logger.error(f"secret `{sec_name}` already exist in namespace '{namespace}' and is not managed by ClusterSecret")
+
+            # If we should not overwrite existing secrets
+            if not get_replace_existing():
+                logger.info(f"secret `{sec_name}` will not be replaced. You can enforce this by setting env REPLACE_EXISTING to true.")
+                return
 
         logger.info('Using replace_namespaced_secret.')
         v1.replace_namespaced_secret(
