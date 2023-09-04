@@ -74,7 +74,7 @@ def get_ns_list(
     if 'matchNamespace' not in body:
         matchNamespace.append('.*')
     else:
-        matchNamespace.append(body['matchNamespace'])
+        matchNamespace=body['matchNamespace']
         
     logger.debug(f'Matching namespaces regex: {matchNamespace}')
 
