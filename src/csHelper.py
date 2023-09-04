@@ -9,7 +9,7 @@ from datetime import datetime
 
 from kubernetes.client import CoreV1Api
 
-from src.consts import CREATE_BY_ANNOTATION, LAST_SYNC_ANNOTATION, \
+from consts import CREATE_BY_ANNOTATION, LAST_SYNC_ANNOTATION, \
     VERSION_ANNOTATION
 
 
@@ -72,10 +72,10 @@ def get_ns_list(
 
     matchNamespace = '*' if 'matchNamespace' not in body else body['matchNamespace']
     logger.debug(f'Matching namespaces: {matchNamespace}')
-    
+
     if matchNamespace is None:  # if delted key (issue 26)
         matchNamespace = '*'
-    
+
     try:
         avoidNamespaces = body.get('avoidNamespaces')
     except KeyError:
@@ -96,8 +96,8 @@ def get_ns_list(
             for ns in nss:
                 if re.match(avoidns, ns.metadata.name):
                     avoidedns.append(ns.metadata.name)
-                    logger.debug(f'Skipping namespaces: {ns.metadata.name} avoid pattern: {avoidns}')  
-    # purge
+                    logger.debug(f'Skipping namespaces: {ns.metadata.name} avoid pattern: {avoidns}')
+                    # purge
     for ns in matchedns.copy():
         if ns in avoidedns:
             matchedns.remove(ns)
@@ -113,9 +113,9 @@ def read_data_secret(
 ):
     """Gets the data from the 'name' secret in namespace
     """
-    data={}
+    data = {}
     logger.debug(f'Reading {name} from ns {namespace}')
-    try: 
+    try:
         secret = v1.read_namespaced_secret(name, namespace)
 
         logger.debug(f'Obtained secret {secret}')
@@ -141,7 +141,7 @@ def delete_secret(
 
     logger.info(f'deleting secret {name} from namespace {namespace}')
     try:
-        v1.delete_namespaced_secret(name,namespace)
+        v1.delete_namespaced_secret(name, namespace)
     except client.rest.ApiException as e:
         if e.status == 404:
             logger.warning(f"The namespace {namespace} may not exist anymore: Not found")
@@ -174,7 +174,7 @@ def secret_metadata(
 
     try:
         secret = v1.read_namespaced_secret(name, namespace)
-        return secret.metadata.annotations
+        return secret.metadata
     except client.exceptions.ApiException as e:
         if e.status == 404:
             return None
@@ -210,7 +210,7 @@ def sync_secret(
             logger.error('Data keys with ValueFrom error, enable debug for more details')
             logger.debug(f'keys: {data.keys()}  len {len(data.keys())}')
             raise kopf.TemporaryError("ValueFrom can not coexist with other keys in the data")
-            
+
         try:
             ns_from = data['valueFrom']['secretKeyRef']['namespace']
             name_from = data['valueFrom']['secretKeyRef']['name']
@@ -219,8 +219,8 @@ def sync_secret(
             logger.debug(f'Taking value from secret {name_from} from namespace {ns_from} - All keys')
             data = read_data_secret(logger, name_from, ns_from, v1)
         except KeyError:
-            logger.error (f'ERROR reading data from remote secret, enable debug for more details')
-            logger.debug (f'Deta details: {data}')
+            logger.error(f'ERROR reading data from remote secret, enable debug for more details')
+            logger.debug(f'Deta details: {data}')
             raise kopf.TemporaryError("Can not get Values from external secret")
 
     logger.debug(f'Going to create with data: {data}')
@@ -241,25 +241,35 @@ def sync_secret(
 
         # If nothing returned, the secret does not exist, creating it then
         if metadata is None:
-            logger.info('Using create_namespaced_secret.')
-            v1.create_namespaced_secret(namespace, body)
+            logger.info(f'Using create_namespaced_secret')
+            logger.debug(f'response is {v1.create_namespaced_secret(namespace, body)}')
             return
 
-        if metadata.get(CREATE_BY_ANNOTATION) is None:
-            logger.error(f"secret `{sec_name}` already exist in namespace '{namespace}' and is not managed by ClusterSecret")
+        if metadata.annotations is None:
+            logger.info(
+                "secret `{sec_name}` exist but it does not have annotations, so is not managed by ClusterSecret")
 
             # If we should not overwrite existing secrets
             if not get_replace_existing():
-                logger.info(f"secret `{sec_name}` will not be replaced. You can enforce this by setting env REPLACE_EXISTING to true.")
+                logger.info(
+                    f"secret `{sec_name}` will not be replaced. You can enforce this by setting env REPLACE_EXISTING to true.")
                 return
+        else:
+            if metadata.annotations.get(CREATE_BY_ANNOTATION) is None:
+                logger.error(
+                    f"secret `{sec_name}` already exist in namespace '{namespace}' and is not managed by ClusterSecret")
 
-        logger.info('Using replace_namespaced_secret.')
-        v1.replace_namespaced_secret(
-            name=sec_name,
-            namespace=namespace,
-            body=body
-        )
+                if not get_replace_existing():
+                    logger.info(
+                        f"secret `{sec_name}` will not be replaced. You can enforce this by setting env REPLACE_EXISTING to true.")
+                    return
 
+            logger.info(f'Reeplacing secret {sec_name}')
+            v1.replace_namespaced_secret(
+                name=sec_name,
+                namespace=namespace,
+                body=body
+            )
     except client.rest.ApiException as e:
         logger.error(f'Can not create a secret, it is base64 encoded? enable debug for details')
         logger.debug(f'data: {data}')
