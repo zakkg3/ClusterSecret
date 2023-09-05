@@ -1,4 +1,4 @@
-name: Lint and Test Charts
+name: Conformance
 
 on:
   push:
