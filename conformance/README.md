@@ -1,0 +1,1 @@
+Those test need to have access to a Kubernetes repository where ClusterSecret is already deployed.
