@@ -69,12 +69,17 @@ def get_ns_list(
     """Returns a list of namespaces where the secret should be matched
     """
     v1 = v1 or client.CoreV1Api()
-
-    matchNamespace = '*' if 'matchNamespace' not in body else body['matchNamespace']
-    logger.debug(f'Matching namespaces: {matchNamespace}')
+    matchNamespace = []
+    
+    if 'matchNamespace' not in body:
+        matchNamespace.append('.*')
+    else:
+        matchNamespace=body['matchNamespace']
+        
+    logger.debug(f'Matching namespaces regex: {matchNamespace}')
 
     if matchNamespace is None:  # if delted key (issue 26)
-        matchNamespace = '*'
+        matchNamespace.append('.*')
 
     try:
         avoidNamespaces = body.get('avoidNamespaces')
