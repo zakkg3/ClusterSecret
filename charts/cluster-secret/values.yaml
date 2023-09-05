@@ -1,8 +1,8 @@
 clustersecret:
   clustersecret:
     image:
-      repository: axel7083/clustersecret
-      tag: debug-0.0.10-5
+      repository: flag5/clustersecret
+      tag: 0.0.10
       # use tag__arm32 for ARM builds
       # If Clustersecret is about to create a secret and then it founds it exists:
       # Default is to ignore it. (to not loose any unintentional data)
