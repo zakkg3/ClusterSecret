@@ -1,4 +1,4 @@
-name: Conformance
+name: Conformance tests
 
 on:
   push:
