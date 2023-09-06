@@ -58,8 +58,8 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
           tags: ${{ env.IMAGE_TAGS }}
-          archs: 386, amd64, arm64, ppc64le, s390x
-          platforms: linux/arm/v5, linux/arm/v7, linux/arm64/v8
+          archs: , 
+          platforms: linux/386, linux/amd64, linux/arm64, linux/ppc64le, linux/s390x, linux/arm/v5, linux/arm/v7, linux/arm64/v8
           containerfiles: |
             ./Dockerfile.gh
 
