@@ -16,16 +16,16 @@ env:
 
 jobs:
   
-  login:
-    name: Log in to image registry
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Log in to Quay.io
-        uses: redhat-actions/podman-login@v1
-        with:
-          username: clustersecret
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-          registry: quay.io/clustersecret
+  # login:
+  #   name: Log in to image registry
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - name: Log in to Quay.io
+  #       uses: redhat-actions/podman-login@v1
+  #       with:
+  #         username: ${{ secrets.REGISTRY_USER }}
+  #         password: ${{ secrets.REGISTRY_PASSWORD }}
+  #         registry: quay.io/clustersecret
 
   build-push-quay:
     name: Build and push manifest
@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        install_latest: [ true ]
+        install_latest: [ false ]
         # install_latest: [ true, false ]
 
     steps:
@@ -47,6 +47,7 @@ jobs:
           bash .github/install_latest_podman.sh
 
       - name: Install qemu dependency
+        if: matrix.install_latest
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-user-static
@@ -58,7 +59,7 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
           tags: ${{ env.IMAGE_TAGS }}
-          platforms: linux/arm64/v8
+          platforms: linux/386
           containerfiles: |
             ./Dockerfile.gh
 
@@ -72,7 +73,7 @@ jobs:
           tags: ${{ steps.build_image.outputs.tags }}
           registry: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}
           username: ${{ secrets.REGISTRY_USER }}
-          # password: ${{ secrets.REGISTRY_PASSWORD }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Echo outputs
         run: |
