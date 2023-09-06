@@ -15,7 +15,7 @@ env:
 
 jobs:
   build-push-quay:
-    name: Build and push manifest
+    name: Build&Push
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
