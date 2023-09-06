@@ -1,1 +1,113 @@
-# Docker build images on realease or tag
+# Docker build images on tag
+name: Build and Push Image
+on:
+  push:
+    tags:
+      - '*'
+#          echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
+#          echo "Tag name from github.ref_name: ${{  github.ref_name }}"
+
+env:
+  IMAGE_TAGS: latest ${{ github.sha }}
+  # REGISTRY_USER: clustersecret
+  IMAGE_REGISTRY: quay.io/clustersecret
+  # REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+
+jobs:
+  
+  login:
+    name: Log in to image registry
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Log in to Quay.io
+        uses: redhat-actions/podman-login@v1
+        with:
+          username: clustersecret
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+          registry: quay.io/clustersecret
+
+
+      # - name: Build and push
+      #   uses: docker/build-push-action@v4
+      #   with:
+      #     context: .
+      #     platforms: linux/amd64,linux/arm64
+      #     push: true
+      #     tags: |
+      #       quay.io/clustersecret:latest
+      #       user/app:1.0.0
+      #       ghcr.io/user/app:latest
+      #       ghcr.io/user/app:1.0.0   
+
+  # 
+  # build:
+  #   name: Build and push image
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - name: Make it all
+  #     id: make-all
+  #     run: make github
+
+    # Podman Login action (https://github.com/redhat-actions/podman-login) also be used to log in,
+    # in which case 'username' and 'password' can be omitted.
+    # - name: Push To quay.io
+    #   id: push-to-quay
+    #   uses: redhat-actions/push-to-registry@v2
+    #   with:
+    #     image: ${{ steps.build-image.outputs.image }}
+    #     tags: ${{ steps.build-image.outputs.tags }}
+    #     registry: quay.io/clustersecret
+    #     username: clustersecret
+    #     # password: ${{ secrets.REGISTRY_PASSWORD }}
+
+    # - name: Print image url
+    #   run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
+  build-push-quay:
+    name: Build and push manifest
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        install_latest: [ true, false ]
+
+    steps:
+      # Checkout push-to-registry action github repository
+      - name: Checkout Push to Registry action
+        uses: actions/checkout@v2
+
+      - name: Install latest podman
+        if: matrix.install_latest
+        run: |
+          bash .github/install_latest_podman.sh
+
+      - name: Install qemu dependency
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+
+
+      - name: Build Image
+        id: build_image
+        uses: redhat-actions/buildah-build@main
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ env.IMAGE_TAGS }}
+          archs: i386, amd64, arm64, arm32v5, arm32v7, arm64v8, ppc64le, s390x
+          containerfiles: |
+            ./Dockerfile.gh
+
+      # Push the image manifest to Quay.io (Image Registry)
+      - name: Push To Quay
+        uses: ./
+        id: push
+        with:
+          image: ${{ steps.build_image.outputs.image }}
+          tags: ${{ steps.build_image.outputs.tags }}
+          registry: ${{ env.IMAGE_REGISTRY }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Echo outputs
+        run: |
+          echo "${{ toJSON(steps.push.outputs) }}"
