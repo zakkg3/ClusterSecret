@@ -9,9 +9,10 @@ on:
 
 env:
   IMAGE_TAGS: latest ${{ github.sha }}
-  # REGISTRY_USER: clustersecret
-  IMAGE_REGISTRY: quay.io/clustersecret
-  # REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+  REGISTRY_USER: clustersecret
+  IMAGE_REGISTRY: quay.io
+  IMAGE_NAMESPACE : clustersecret
+  REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
 jobs:
   
@@ -91,7 +92,7 @@ jobs:
         id: build_image
         uses: redhat-actions/buildah-build@main
         with:
-          image: ${{ env.IMAGE_NAME }}
+          image: ${{ env.IMAGE_NAMESPACE }}
           tags: ${{ env.IMAGE_TAGS }}
           archs: i386, amd64, arm64, arm32v5, arm32v7, arm64v8, ppc64le, s390x
           containerfiles: |
@@ -104,7 +105,7 @@ jobs:
         with:
           image: ${{ steps.build_image.outputs.image }}
           tags: ${{ steps.build_image.outputs.tags }}
-          registry: ${{ env.IMAGE_REGISTRY }}
+          registry: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}
           username: ${{ secrets.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
