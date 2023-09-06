@@ -64,13 +64,14 @@ jobs:
 
       # Push the image manifest to Quay.io (Image Registry)
       - name: Push To Quay
-        uses: ./
-        id: push
+        # uses: ./
+        id: push-to-quay
+        uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ steps.build_image.outputs.image }}
           tags: ${{ steps.build_image.outputs.tags }}
           registry: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}
-          # username: ${{ secrets.REGISTRY_USER }}
+          username: ${{ secrets.REGISTRY_USER }}
           # password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Echo outputs
