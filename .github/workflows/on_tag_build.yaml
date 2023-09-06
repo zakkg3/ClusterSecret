@@ -58,7 +58,8 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
           tags: ${{ env.IMAGE_TAGS }}
-          archs: 386, amd64, arm64, arm/v5, arm/v7, arm64/v8, mips64le, ppc64le, s390x
+          archs: 386, amd64, arm64, ppc64le, s390x
+          platforms: linux/arm/v5, linux/arm/v7, linux/arm64/v8
           containerfiles: |
             ./Dockerfile.gh
 
@@ -70,8 +71,8 @@ jobs:
           image: ${{ steps.build_image.outputs.image }}
           tags: ${{ steps.build_image.outputs.tags }}
           registry: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}
-          username: ${{ secrets.REGISTRY_USER }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          # username: ${{ secrets.REGISTRY_USER }}
+          # password: ${{ secrets.REGISTRY_PASSWORD }}
 
       - name: Echo outputs
         run: |
