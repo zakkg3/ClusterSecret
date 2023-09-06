@@ -3,30 +3,46 @@ IMG_NAME = clustersecret
 IMG_FQNAME = $(IMG_NAMESPACE)/$(IMG_NAME)
 IMG_VERSION = 0.0.10
 
-.PHONY: container push clean arm-container arm-push arm-clean
+.PHONY: container push clean 
 all: container push
-arm: arm-container arm-push
-clean: clean arm-clean
 
 
 container:
-	sudo docker build -t $(IMG_FQNAME):$(IMG_VERSION) -t $(IMG_FQNAME):latest .
+	for ARCH in i386 amd64 arm32v5 arm32v7 arm64v8 ppc64le s390x; do \
+		sudo docker build -t $(IMG_FQNAME)-$$ARCH:$(IMG_VERSION) -t $(IMG_FQNAME)-$$ARCH:latest --build-arg ARCH=$$ARCH/ .; \
+	done
 
-push: container
-	sudo docker push $(IMG_FQNAME):$(IMG_VERSION)
-	sudo docker push $(IMG_FQNAME):latest
+push:
+	for ARCH in i386 amd64 arm32v5 arm32v7 arm64v8 ppc64le s390x; do \
+		sudo docker push $(IMG_FQNAME)-$$ARCH:latest; \
+		sudo docker push $(IMG_FQNAME)-$$ARCH:$(IMG_VERSION); \
+	done
+	sudo docker manifest create \
+		$(IMG_FQNAME):latest \
+		--amend $(IMG_FQNAME)-i386:$(IMG_VERSION)  \
+		--amend $(IMG_FQNAME)-amd64:$(IMG_VERSION)  \
+		--amend $(IMG_FQNAME)-arm32v5:$(IMG_VERSION)  \
+		--amend $(IMG_FQNAME)-arm32v7:$(IMG_VERSION)  \
+		--amend $(IMG_FQNAME)-arm64v8:$(IMG_VERSION)  \
+		--amend $(IMG_FQNAME)-ppc64le:$(IMG_VERSION)  \
+		--amend $(IMG_FQNAME)-s390x:$(IMG_VERSION)
+	sudo docker manifest push $(IMG_FQNAME):latest
+		sudo docker manifest create \
+		$(IMG_FQNAME):$(IMG_VERSION)  \
+		--amend $(IMG_FQNAME)-i386:$(IMG_VERSION)  \
+		--amend $(IMG_FQNAME)-amd64:$(IMG_VERSION)  \
+		--amend $(IMG_FQNAME)-arm32v5:$(IMG_VERSION)  \
+		--amend $(IMG_FQNAME)-arm32v7:$(IMG_VERSION)  \
+		--amend $(IMG_FQNAME)-arm64v8:$(IMG_VERSION)  \
+		--amend $(IMG_FQNAME)-ppc64le:$(IMG_VERSION)  \
+		--amend $(IMG_FQNAME)-s390x:$(IMG_VERSION)
+	sudo docker manifest push $(IMG_FQNAME):$(IMG_VERSION) 
 
 clean:
-	sudo docker rmi $(IMG_FQNAME):$(IMG_VERSION)
-
-arm-container:
-	sudo docker build -t $(IMG_FQNAME):$(IMG_VERSION)_arm32 -f Dockerfile.arm .
-	
-arm-push: arm-container
-	sudo docker push $(IMG_FQNAME):$(IMG_VERSION)_arm32
-
-arm-clean:
-	sudo docker rmi $(IMG_FQNAME):$(IMG_VERSION)_arm32
+	for ARCH in i386 amd64 arm32v5 arm32v7 arm64v8 ppc64le s390x; do \
+		sudo docker rmi $(IMG_FQNAME)-$$ARCH:latest; \
+		sudo docker rmi $(IMG_FQNAME)-$$ARCH:$(IMG_VERSION); \
+	done
 
 beta:
 	sudo docker build -t $(IMG_FQNAME):$(IMG_VERSION)-beta .
