@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         install_latest: [ false ]
-        # install_latest: [ true, false ]
+        # install_latest: [ true, false ] #ubuntu-20.04 has a good enough podman.
     steps:
       # Checkout push-to-registry action github repository
       - name: Checkout Push to Registry action
@@ -33,7 +33,8 @@ jobs:
           bash .github/install_latest_podman.sh
 
       - name: Install qemu dependency
-        if: matrix.install_latest
+        # we need quemu-user-static for builds other archs with buildah
+        # https://github.com/containers/podman/issues/13924#issuecomment-1103434554
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-user-static
@@ -44,7 +45,7 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
           tags: ${{ env.IMAGE_TAGS }}
-          platforms: linux/386
+          platforms: linux/386, linux/amd64, linux/arm/v5, linux/arm/v7, linux/arm64/v8, linux/mips64le, linux/ppc64le, linux/s390x
           containerfiles: |
             ./Dockerfile.gh
 
