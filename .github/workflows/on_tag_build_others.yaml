@@ -1,5 +1,5 @@
 # Docker build images on tag
-name: Build and Push Image
+name: Build and Push other archs
 on:
   push:
     tags:
@@ -44,7 +44,7 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
           tags: ${{ env.IMAGE_TAGS }}
-          platforms: linux/386
+          platforms: linux/amd64, linux/arm64, linux/ppc64le, linux/s390x, linux/arm/v5, linux/arm/v7, linux/arm64/v8
           containerfiles: |
             ./Dockerfile.gh
 
