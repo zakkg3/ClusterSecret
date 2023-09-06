@@ -4,7 +4,7 @@ IMG_FQNAME = $(IMG_NAMESPACE)/$(IMG_NAME)
 IMG_VERSION = 0.0.10-beta
 
 .PHONY: container push clean 
-all: container push
+all: container
 
 
 container:
@@ -12,6 +12,7 @@ container:
 		sudo docker build -t $(IMG_FQNAME)-$$ARCH:$(IMG_VERSION) -t $(IMG_FQNAME)-$$ARCH:latest --build-arg ARCH=$$ARCH/ .; \
 	done
 
+# not push anymore with this. check the github actions
 push:
 	for ARCH in i386 amd64 arm32v5 arm32v7 arm64v8 ppc64le s390x; do \
 		sudo docker push $(IMG_FQNAME)-$$ARCH:latest; \
