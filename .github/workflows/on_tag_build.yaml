@@ -8,7 +8,7 @@ on:
 #          echo "Tag name from github.ref_name: ${{  github.ref_name }}"
 
 env:
-  IMAGE_TAGS: latest ${{ github.sha }}
+  IMAGE_TAGS: latest ${{ github.sha }} ${{  github.ref_name }}
   REGISTRY_USER: clustersecret
   IMAGE_REGISTRY: quay.io
   IMAGE_NAMESPACE : clustersecret
