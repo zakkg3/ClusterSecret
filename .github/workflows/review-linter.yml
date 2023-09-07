@@ -1,8 +1,5 @@
 name: Linter
-on:
-  push:
-    branches:
-      - '*'
+on: [push]
 jobs:
   lint:
     name: LinterMonkey
