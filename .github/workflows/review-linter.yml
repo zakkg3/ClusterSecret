@@ -1,0 +1,18 @@
+name: Linter
+on:
+  push:
+    branches:
+      - '*'
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: wemake-python-styleguide
+        uses: wemake-services/wemake-python-styleguide
+        with:
+          reporter: 'github-pr-review'
+          path: './src'
+        env:
+          GITHUB_TOKEN: ${{ secrets.github_token }}
