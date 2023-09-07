@@ -12,7 +12,7 @@ jobs:
         name: GitCheckout
 
       - name: wemake-python-styleguide
-        uses: wemake-services/wemake-python-styleguide@latest
+        uses: wemake-services/wemake-python-styleguide@0.18.0
         with:
           reporter: 'github-pr-review'
           path: './src'
