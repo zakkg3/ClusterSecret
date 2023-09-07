@@ -5,10 +5,12 @@ on:
       - '*'
 jobs:
   lint:
+    name: LinterMonkey
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
+        name: GitCheckout
+
       - name: wemake-python-styleguide
         uses: wemake-services/wemake-python-styleguide
         with:
