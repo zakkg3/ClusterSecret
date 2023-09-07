@@ -42,8 +42,8 @@ jobs:
         id: build_image
         uses: redhat-actions/buildah-build@main
         with:
-          image: ${{ env.IMAGE_NAMESPACE }} latest
-          tags: ${{ env.IMAGE_TAGS }}
+          image: ${{ env.IMAGE_NAMESPACE }}
+          tags: ${{ env.IMAGE_TAGS }} latest
           platforms: linux/386, linux/amd64
           containerfiles: |
             ./Dockerfile.gh
