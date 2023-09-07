@@ -44,7 +44,7 @@ jobs:
         uses: redhat-actions/buildah-build@main
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
-          tags: ${{ env.IMAGE_TAGS }}
+          tags: ${{ env.IMAGE_TAGS }}-alt
           platforms: linux/arm/v5, linux/arm/v7, linux/arm64/v8, linux/mips64le, linux/ppc64le, linux/s390x
           containerfiles: |
             ./Dockerfile-others.gh
