@@ -49,6 +49,16 @@ jobs:
           containerfiles: |
             ./Dockerfile.gh
 
+      - name: Build alt Images
+        id: build_alt_image
+        uses: redhat-actions/buildah-build@main
+        with:
+          image: ${{ env.IMAGE_NAMESPACE }}
+          tags: ${{ env.IMAGE_TAGS }}-alt
+          platforms: linux/arm/v5, linux/arm/v7, linux/arm64/v8, linux/mips64le, linux/ppc64le, linux/s390x
+          containerfiles: |
+            ./Dockerfile-others.gh
+
       # Push the image manifest to Quay.io (Image Registry)
       - name: Push To Quay
         # uses: ./
@@ -56,7 +66,7 @@ jobs:
         uses: redhat-actions/push-to-registry@v2
         with:
           image: ${{ steps.build_image.outputs.image }}
-          tags: ${{ steps.build_image.outputs.tags }}
+          tags: ${{ steps.build_image.outputs.tags }} ${{ steps.build_alt_image.outputs.tags }}
           registry: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}
           username: ${{ secrets.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
