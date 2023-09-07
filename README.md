@@ -118,10 +118,13 @@ data:
   password: Nzg5MTAxMTIxMgo=
 ```
 
+## images
+
+https://quay.io/repository/clustersecret/clustersecret
 
 ## Known bugs:
- 
 
+ - check this on issues tab
 
 # Roadmap:
 
