@@ -1,25 +1,11 @@
 import logging
 from typing import Optional, Dict, Any, List
-
 import kopf
 import re
 from kubernetes import client
-import os
-from datetime import datetime
-
-from kubernetes.client import CoreV1Api
-
-from consts import CREATE_BY_ANNOTATION, LAST_SYNC_ANNOTATION, \
-    VERSION_ANNOTATION
-
-
-def get_version() -> str:
-    return os.getenv('CLUSTER_SECRET_VERSION', '0')
-
-
-def get_replace_existing() -> bool:
-    replace_existing = os.getenv('REPLACE_EXISTING', 'false')
-    return replace_existing.lower() == 'true'
+from kubernetes.client import CoreV1Api, CustomObjectsApi
+from consts import CREATE_BY_ANNOTATION
+from utils import get_replace_existing, create_secret_metadata
 
 
 def patch_clustersecret_status(
@@ -27,18 +13,16 @@ def patch_clustersecret_status(
         namespace: str,
         name: str,
         new_status,
-        v1: Optional[CoreV1Api] = None
+        custom_objects_api: CustomObjectsApi
 ):
     """Patch the status of a given clustersecret object
     """
-    v1 = v1 or client.CustomObjectsApi()
-
     group = 'clustersecret.io'
     version = 'v1'
     plural = 'clustersecrets'
 
     # Retrieve the clustersecret object
-    clustersecret = v1.get_namespaced_custom_object(
+    clustersecret = custom_objects_api.get_namespaced_custom_object(
         group=group,
         version=version,
         namespace=namespace,
@@ -51,7 +35,7 @@ def patch_clustersecret_status(
     logger.debug(f'Updated clustersecret manifest: {clustersecret}')
 
     # Perform a patch operation to update the custom resource
-    v1.patch_namespaced_custom_object(
+    custom_objects_api.patch_namespaced_custom_object(
         group=group,
         version=version,
         namespace=namespace,
@@ -64,57 +48,44 @@ def patch_clustersecret_status(
 def get_ns_list(
         logger: logging.Logger,
         body: Dict[str, Any],
-        v1: Optional[CoreV1Api] = None
+        v1: CoreV1Api
 ) -> List[str]:
     """Returns a list of namespaces where the secret should be matched
     """
-    v1 = v1 or client.CoreV1Api()
-    matchNamespace = []
-    
-    if 'matchNamespace' not in body:
-        matchNamespace.append('.*')
-    else:
-        matchNamespace=body['matchNamespace']
-        
-    logger.debug(f'Matching namespaces regex: {matchNamespace}')
+    # Get matchNamespace or default to all
+    match_namespace = body.get('matchNamespace', ['.*'])
 
-    if matchNamespace is None:  # if delted key (issue 26)
-        matchNamespace.append('.*')
+    # Get avoidNamespaces or default to None
+    avoid_namespaces = body.get('avoidNamespaces', None)
 
-    try:
-        avoidNamespaces = body.get('avoidNamespaces')
-    except KeyError:
-        avoidNamespaces = ''
-        logger.debug("not avoiding namespaces")
+    # Collect all namespaces names
+    nss = [ns.metadata.name for ns in v1.list_namespace().items]
+    matched_ns = []
+    avoided_ns = []
 
-    nss = v1.list_namespace().items
-    matchedns = []
-    avoidedns = []
+    # Iterate over all matchNamespace
+    for match_ns in match_namespace:
+        matched_ns.extend([ns for ns in nss if re.match(match_ns, ns)])
+        logger.debug(f'Matched namespaces: {", ".join(matched_ns)} match pattern: {match_ns}')
 
-    for matchns in matchNamespace:
-        for ns in nss:
-            if re.match(matchns, ns.metadata.name):
-                matchedns.append(ns.metadata.name)
-                logger.debug(f'Matched namespaces: {ns.metadata.name} match pattern: {matchns}')
-    if avoidNamespaces:
-        for avoidns in avoidNamespaces:
-            for ns in nss:
-                if re.match(avoidns, ns.metadata.name):
-                    avoidedns.append(ns.metadata.name)
-                    logger.debug(f'Skipping namespaces: {ns.metadata.name} avoid pattern: {avoidns}')
-                    # purge
-    for ns in matchedns.copy():
-        if ns in avoidedns:
-            matchedns.remove(ns)
+    # If avoidNamespaces is None simply return our matched list
+    if not avoid_namespaces:
+        return matched_ns
 
-    return matchedns
+    # Iterate over all avoidNamespaces
+    for avoid_ns in avoid_namespaces:
+        avoided_ns.extend([ns for ns in nss if re.match(avoid_ns, ns)])
+        logger.debug(f'Skipping namespaces: {", ".join(avoided_ns)} avoid pattern: {avoid_ns}')
+
+    matched_ns = list(set(matched_ns) - set(avoided_ns))
+    return matched_ns
 
 
 def read_data_secret(
         logger: logging.Logger,
         name: str,
         namespace: str,
-        v1: Optional[CoreV1Api] = None
+        v1: CoreV1Api
 ):
     """Gets the data from the 'name' secret in namespace
     """
@@ -138,12 +109,10 @@ def delete_secret(
         logger: logging.Logger,
         namespace: str,
         name: str,
-        v1: Optional[CoreV1Api] = None
+        v1: CoreV1Api
 ):
     """Deletes a given secret from a given namespace
     """
-    v1 = v1 or client.CoreV1Api()
-
     logger.info(f'deleting secret {name} from namespace {namespace}')
     try:
         v1.delete_namespaced_secret(name, namespace)
@@ -159,7 +128,7 @@ def secret_exists(
         logger: logging.Logger,
         name: str,
         namespace: str,
-        v1: Optional[CoreV1Api] = None
+        v1: CoreV1Api
 ):
     return secret_metadata(
         logger=logger,
@@ -173,10 +142,8 @@ def secret_metadata(
         logger: logging.Logger,
         name: str,
         namespace: str,
-        v1: Optional[CoreV1Api] = None
-) -> Optional[Dict[str, str]]:
-    v1 = v1 or client.CoreV1Api()
-
+        v1: CoreV1Api
+) -> Optional[client.V1ObjectMeta]:
     try:
         secret = v1.read_namespaced_secret(name, namespace)
         return secret.metadata
@@ -191,12 +158,10 @@ def sync_secret(
         logger: logging.Logger,
         namespace: str,
         body: Dict[str, Any],
-        v1: Optional[CoreV1Api] = None
+        v1: CoreV1Api
 ):
     """Creates a given secret on a given namespace
     """
-    v1 = v1 or client.CoreV1Api()
-
     if 'metadata' not in body:
         raise kopf.TemporaryError("Metadata is required.")
 
@@ -224,7 +189,7 @@ def sync_secret(
             logger.debug(f'Taking value from secret {name_from} from namespace {ns_from} - All keys')
             data = read_data_secret(logger, name_from, ns_from, v1)
         except KeyError:
-            logger.error(f'ERROR reading data from remote secret, enable debug for more details')
+            logger.error('ERROR reading data from remote secret, enable debug for more details')
             logger.debug(f'Deta details: {data}')
             raise kopf.TemporaryError("Can not get Values from external secret")
 
@@ -242,22 +207,25 @@ def sync_secret(
 
     try:
         # Get metadata from secrets (if exist)
-        metadata = secret_metadata(logger, name=sec_name, namespace=namespace)
+        metadata = secret_metadata(logger, name=sec_name, namespace=namespace, v1=v1)
 
         # If nothing returned, the secret does not exist, creating it then
         if metadata is None:
-            logger.info(f'Using create_namespaced_secret')
+            logger.info('Using create_namespaced_secret')
             logger.debug(f'response is {v1.create_namespaced_secret(namespace, body)}')
             return
 
         if metadata.annotations is None:
             logger.info(
-                "secret `{sec_name}` exist but it does not have annotations, so is not managed by ClusterSecret")
+                f"secret `{sec_name}` exist but it does not have annotations, so is not managed by ClusterSecret"
+            )
 
             # If we should not overwrite existing secrets
             if not get_replace_existing():
                 logger.info(
-                    f"secret `{sec_name}` will not be replaced. You can enforce this by setting env REPLACE_EXISTING to true.")
+                    f"secret `{sec_name}` will not be replaced. "
+                    f"You can enforce this by setting env REPLACE_EXISTING to true."
+                )
                 return
         else:
             if metadata.annotations.get(CREATE_BY_ANNOTATION) is None:
@@ -266,28 +234,18 @@ def sync_secret(
 
                 if not get_replace_existing():
                     logger.info(
-                        f"secret `{sec_name}` will not be replaced. You can enforce this by setting env REPLACE_EXISTING to true.")
+                        f"secret `{sec_name}` will not be replaced. "
+                        f"You can enforce this by setting env REPLACE_EXISTING to true."
+                    )
                     return
 
-            logger.info(f'Reeplacing secret {sec_name}')
-            v1.replace_namespaced_secret(
-                name=sec_name,
-                namespace=namespace,
-                body=body
-            )
+        logger.info(f'Replacing secret {sec_name}')
+        v1.replace_namespaced_secret(
+            name=sec_name,
+            namespace=namespace,
+            body=body
+        )
     except client.rest.ApiException as e:
-        logger.error(f'Can not create a secret, it is base64 encoded? enable debug for details')
+        logger.error('Can not create a secret, it is base64 encoded? enable debug for details')
         logger.debug(f'data: {data}')
         logger.debug(f'Kube exception {e}')
-
-
-def create_secret_metadata(name: str, namespace: str) -> client.V1ObjectMeta:
-    return client.V1ObjectMeta(
-        name=name,
-        namespace=namespace,
-        annotations={
-            CREATE_BY_ANNOTATION: "ClusterSecrets",
-            VERSION_ANNOTATION: get_version(),
-            LAST_SYNC_ANNOTATION: datetime.now().isoformat()
-        }
-    )
