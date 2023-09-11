@@ -120,7 +120,21 @@ data:
 
 ## images
 
+Images are build and push on tag ('git tag') with Github Actions. You can find them here:
+
 https://quay.io/repository/clustersecret/clustersecret
+
+## default archs  :
+ 
+the following archetecures:
+
+ - linux/386
+ - linux/amd64
+
+are under the image:tag : `quay.io/clustersecret/clustersecret:0.0.10`
+ 
+Alternative architecrues:
+ 
 
 ## Known bugs:
 
