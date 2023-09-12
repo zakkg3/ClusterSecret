@@ -44,8 +44,8 @@ jobs:
       - name: Create kind cluster
         uses: helm/kind-action@v1.8.0
 
-      - name: Run testing
-        run: kind load docker-image cluster-secret:${{ github.sha }}
+      - name: Loading locally build image to kind cluster
+        run: kind load docker-image cluster-secret:${{ github.sha }} --context=chart-testing
 
       - name: Run helm install
         run: helm install cluster-secret ./charts/cluster-secret -n cluster-secret --create-namespace --set clustersecret.clustersecret.image.repository=cluster-secret,clustersecret.clustersecret.image.tag=${{ github.sha }}
