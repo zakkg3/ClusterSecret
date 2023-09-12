@@ -1,12 +1,10 @@
 import unittest
-from typing import Callable, Dict, Optional, List, Any
-from time import sleep
+
 from kubernetes import client, config
-from kubernetes.client import V1Secret
 from kubernetes.client.rest import ApiException
 
 # Load Kubernetes configuration from the default location or provide your own kubeconfig file path
-from k8s_utils import wait_for_pod_ready_with_events
+from k8s_utils import wait_for_pod_ready_with_events, ClusterSecretManager
 
 config.load_kube_config()
 
@@ -18,75 +16,11 @@ CLUSTER_SECRET_NAMESPACE = "cluster-secret"
 USER_NAMESPACES = ["example-1", "example-2", "example-3"]
 
 
-def retry(f: Callable[[], bool], retries=3, delay=5):
-    while retries > 0:
-        if f():
-            return True
-        sleep(delay)
-        retries -= 1
-    return False
-
-
-def create_cluster_secret(
-        name: str,
-        namespace: str,
-        data: Dict[str, str],
-        labels: Optional[Dict[str, str]] = None,
-        annotations: Optional[Dict[str, str]] = None,
-        match_namespace: Optional[List[str]] = None,
-        avoid_namespaces: Optional[List[str]] = None,
-):
-    return custom_objects_api.create_namespaced_custom_object(
-        group="clustersecret.io",
-        version="v1",
-        namespace=namespace,
-        body={
-            "apiVersion": "clustersecret.io/v1",
-            "kind": "ClusterSecret",
-            "metadata": {"name": name, "labels": labels, "annotations": annotations},
-            "data": data,
-            "matchNamespace": match_namespace,
-            "avoidNamespaces": avoid_namespaces,
-        },
-        plural="clustersecrets",
-    )
-
-
-def update_data_cluster_secret(
-        name: str,
-        namespace: str,
-        data: Dict[str, str],
-):
-    custom_objects_api.patch_namespaced_custom_object(
-        name=name,
-        group="clustersecret.io",
-        version="v1",
-        namespace=namespace,
-        body={
-            "apiVersion": "clustersecret.io/v1",
-            "kind": "ClusterSecret",
-            "data": data,
-        },
-        plural="clustersecrets",
-    )
-
-
-def get_kubernetes_secret(name: str, namespace: str) -> Optional[V1Secret]:
-    try:
-        return api_instance.read_namespaced_secret(name, namespace)
-    except ApiException as e:
-        if e.status == 404:
-            return None
-        else:
-            raise e
-
-
 class ClusterSecretCases(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls) -> None:
-        # Wait for the
-        wait_for_pod_ready_with_events({'app': 'clustersecret'}, namespace='cluster-secret', timeout_seconds=60)
+        # Wait for the cluster secret pod to be ready before running tests
+        wait_for_pod_ready_with_events({'app': 'clustersecret'}, namespace=CLUSTER_SECRET_NAMESPACE, timeout_seconds=60)
 
         # Create namespaces for tests
         for namespace_name in USER_NAMESPACES:
@@ -108,30 +42,35 @@ class ClusterSecretCases(unittest.TestCase):
     def test_simple_cluster_secret(self):
         name = "simple-cluster-secret"
         username_data = "MTIzNDU2Cg=="
+        cluster_secret_manager = ClusterSecretManager(
+            custom_objects_api=custom_objects_api,
+            api_instance=api_instance
+        )
 
-        create_cluster_secret(name=name, namespace=USER_NAMESPACES[0], data={"username": username_data})
+        cluster_secret_manager.create_cluster_secret(
+            name=name,
+            namespace=USER_NAMESPACES[0],
+            data={"username": username_data}
+        )
 
-        def validate():
-            for namespace in USER_NAMESPACES:
-                secret = get_kubernetes_secret(
-                    name=name,
-                    namespace=namespace
-                )
-
-                if secret is None:
-                    return False
-
-                self.assertEqual(secret.data['username'], username_data)
-
-            return True
-
-        self.assertTrue(retry(validate))
+        # We expect the secret to be in ALL namespaces
+        self.assertTrue(
+            cluster_secret_manager.validate_namespace_secrets(
+                name=name,
+                data={"username": username_data},
+            )
+        )
 
     def test_complex_cluster_secret(self):
         name = "complex-cluster-secret"
         username_data = "MTIzNDU2Cg=="
+        cluster_secret_manager = ClusterSecretManager(
+            custom_objects_api=custom_objects_api,
+            api_instance=api_instance
+        )
 
-        create_cluster_secret(
+        # Create a secret in all user namespace expect the first one
+        cluster_secret_manager.create_cluster_secret(
             name=name,
             namespace=USER_NAMESPACES[0],
             data={"username": username_data},
@@ -139,71 +78,99 @@ class ClusterSecretCases(unittest.TestCase):
             avoid_namespaces=[USER_NAMESPACES[0]]
         )
 
-        # Ensure the secret is in all USER_NAMESPACES except the last one
-        def validate():
-            for namespace in USER_NAMESPACES[1:]:
-                secret = get_kubernetes_secret(
-                    name=name,
-                    namespace=namespace
-                )
+        # Ensure the secrets is only present where is to suppose to be
+        self.assertTrue(
+            cluster_secret_manager.validate_namespace_secrets(
+                name=name,
+                data={"username": username_data},
+                namespaces=USER_NAMESPACES[1:],
+            ),
+        )
 
-                if secret is None:
-                    return False
-
-                self.assertEqual(secret.data['username'], username_data)
-
-            secrets = api_instance.list_namespaced_secret(
-                namespace=USER_NAMESPACES[0]
-            )
-
-            self.assertEqual(len([secret for secret in secrets.items if secret.metadata.name == name]), 0)
-            return True
-
-        self.assertTrue(retry(validate))
-
-    def test_patch_cluster_secret(self):
+    def test_patch_cluster_secret_data(self):
         name = "dynamic-cluster-secret"
         username_data = "MTIzNDU2Cg=="
         updated_data = "Nzg5MTAxMTIxMgo="
+        cluster_secret_manager = ClusterSecretManager(
+            custom_objects_api=custom_objects_api,
+            api_instance=api_instance
+        )
 
-        create_cluster_secret(name=name, namespace=USER_NAMESPACES[0], data={"username": username_data})
+        # Create a secret with username_data
+        cluster_secret_manager.create_cluster_secret(
+            name=name,
+            namespace=USER_NAMESPACES[0],
+            data={"username": username_data},
+        )
 
-        def validate():
-            for namespace in USER_NAMESPACES:
-                secret = get_kubernetes_secret(
-                    name=name,
-                    namespace=namespace
-                )
+        # Ensure the secret is created with the right data
+        self.assertTrue(
+            cluster_secret_manager.validate_namespace_secrets(
+                name=name,
+                data={"username": username_data},
+            )
+        )
 
-                if secret is None:
-                    return False
+        # Update the cluster secret's data
+        cluster_secret_manager.update_data_cluster_secret(
+            name=name,
+            data={"username": updated_data},
+            namespace=USER_NAMESPACES[0],
+        )
 
-                self.assertEqual(secret.data['username'], username_data)
+        # Ensure the secrets are updated with the right data (at some point)
+        self.assertTrue(
+            cluster_secret_manager.validate_namespace_secrets(
+                name=name,
+                data={"username": updated_data},
+            ),
+            f'secret {name} should be in all user namespaces',
+        )
 
-            return True
+    def test_patch_cluster_secret_match_namespaces(self):
+        name = "dynamic-cluster-secret-match-namespaces"
+        username_data = "MTIzNDU2Cg=="
+        cluster_secret_manager = ClusterSecretManager(
+            custom_objects_api=custom_objects_api,
+            api_instance=api_instance
+        )
 
-        self.assertTrue(retry(validate))
+        cluster_secret_manager.create_cluster_secret(
+            name=name,
+            namespace=USER_NAMESPACES[0],
+            data={"username": username_data},
+            match_namespace=[
+                USER_NAMESPACES[0]
+            ]
+        )
 
-        update_data_cluster_secret(name=name, data={"username": updated_data}, namespace=USER_NAMESPACES[0])
+        self.assertTrue(
+            cluster_secret_manager.validate_namespace_secrets(
+                name=name,
+                data={"username": username_data},
+                namespaces=[
+                    USER_NAMESPACES[0]
+                ],
+            ),
+            f'secret should be only in namespace {USER_NAMESPACES[0]}'
+        )
 
-        def validate():
-            for namespace in USER_NAMESPACES:
-                secret = get_kubernetes_secret(
-                    name=name,
-                    namespace=namespace
-                )
+        # Update the cluster match_namespace to ALL user namespace
+        cluster_secret_manager.update_data_cluster_secret(
+            name=name,
+            namespace=USER_NAMESPACES[0],
+            match_namespace=USER_NAMESPACES,
+            data={"username": username_data},
+        )
 
-                if secret.data['username'] != updated_data:
-                    return False
-
-            return True
-
-        self.assertTrue(retry(validate))
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        # TODO: cleanup namespaces + ClusterSecrets
-        super().tearDownClass()
+        self.assertTrue(
+            cluster_secret_manager.validate_namespace_secrets(
+                name=name,
+                data={"username": username_data},
+                namespaces=USER_NAMESPACES,
+            ),
+            f'secret {name} should be in all user namespaces'
+        )
 
 
 if __name__ == '__main__':
