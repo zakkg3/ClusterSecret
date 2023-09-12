@@ -87,7 +87,7 @@ def read_data_secret(
     name: str,
     namespace: str,
     v1: CoreV1Api,
-):
+) -> Dict[str, str]:
     """Gets the data from the 'name' secret in namespace
     """
     data = {}
@@ -182,16 +182,22 @@ def sync_secret(
             logger.debug(f'keys: {data.keys()}  len {len(data.keys())}')
             raise kopf.TemporaryError('ValueFrom can not coexist with other keys in the data')
 
-        try:
-            ns_from = data.get('valueFrom', {}).get('secretKeyRef', {}).get('namespace', None)
-            name_from = data.get('valueFrom', {}).get('secretKeyRef', {}).get('name', None)
-            # to-do specifie keys. for now. it will clone all.
-            logger.debug(f'Taking value from secret {name_from} from namespace {ns_from} - All keys')
-            data = read_data_secret(logger, name_from, ns_from, v1)
-        except KeyError:
+        secret_key_ref: Dict[str, Any] = data.get('valueFrom', {}).get('secretKeyRef', {})
+        ns_from: str = secret_key_ref.get('namespace', None)
+        name_from: str = secret_key_ref.get('name', None)
+        keys: Optional[List[str]] = secret_key_ref.get('keys', None)
+
+        if ns_from is None or name_from is None:
             logger.error('ERROR reading data from remote secret, enable debug for more details')
             logger.debug(f'Deta details: {data}')
             raise kopf.TemporaryError('Can not get Values from external secret')
+
+        # Filter the keys in data based on the keys list provided
+        raw_data = read_data_secret(logger, name_from, ns_from, v1)
+        if keys is not None:
+            data = {key: value for key, value in raw_data.items() if key in keys}
+        else:
+            data = raw_data
 
     logger.debug(f'Going to create with data: {data}')
     secret_type = body.get('type', 'Opaque')
@@ -272,3 +278,39 @@ def create_secret_metadata(name: str, namespace: str) -> V1ObjectMeta:
             LAST_SYNC_ANNOTATION: datetime.now().isoformat(),
         },
     )
+
+
+def get_custom_objects_by_kind(
+        group: str,
+        version: str,
+        plural: str,
+        custom_objects_api: CustomObjectsApi,
+) -> List[dict]:
+    """
+    Retrieve all CustomObjectsApi objects across all namespaces based on the provided group, version, and kind.
+
+    Args:
+        group (str): The API group of the custom object.
+        version (str): The API version of the custom object.
+        plural (str): The plural of the custom object.
+        custom_objects_api (CustomObjectsApi): The Kubernetes CustomObjectsApi.
+
+    Returns:
+        List[dict]: A list of custom objects (in dict format) matching the provided group, version, and plural.
+
+    Raises:
+        ApiException: If there is an issue communicating with the Kubernetes API server.
+    """
+    try:
+        # Retrieve all custom objects matching the group, version, and kind
+        custom_objects = custom_objects_api.list_cluster_custom_object(
+            group=group,
+            version=version,
+            plural=plural,
+        )
+
+        return custom_objects['items']
+    except rest.ApiException as e:
+        # Properly handle API exceptions
+        raise rest.ApiException(f'Error while retrieving custom objects: {e}')
+
