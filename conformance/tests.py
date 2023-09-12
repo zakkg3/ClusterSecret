@@ -3,6 +3,8 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
 # Load Kubernetes configuration from the default location or provide your own kubeconfig file path
+from k8s_utils import wait_for_pod_ready_with_events
+
 config.load_kube_config()
 
 # Create a Kubernetes API client
@@ -17,6 +19,9 @@ class ClusterSecretCases(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
+        # First wait for the pod to be available
+        wait_for_pod_ready_with_events({'app': 'clustersecret'}, namespace='cluster-secret')
+
         # Create namespaces for tests
         for namespace_name in USER_NAMESPACES:
             namespace = client.V1Namespace(metadata=client.V1ObjectMeta(name=namespace_name))
