@@ -1,7 +1,7 @@
 clustersecret:
   clustersecret:
     image:
-      repository: flag5/clustersecret
+      repository: quay.io/clustersecret/clustersecret:0.0.10
       tag: 0.0.10
-      # use tag__arm32 for ARM builds
+      # use tag-alt for ARM and other alternative builds - read the readme for more information
 kubernetesClusterDomain: cluster.local
