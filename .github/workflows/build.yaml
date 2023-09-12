@@ -1,0 +1,65 @@
+# Docker build images on tag
+name: Build&Push Images
+on:
+  push:
+    tags:
+      - '*'
+#          echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
+#          echo "Tag name from github.ref_name: ${{  github.ref_name }}"
+
+env:
+  IMAGE_TAGS: ${{  github.ref_name }}
+  REGISTRY_USER: clustersecret
+  IMAGE_REGISTRY: quay.io
+  IMAGE_NAMESPACE : clustersecret
+
+jobs:
+  build-push-quay:
+    name: Build&Push
+    runs-on: ubuntu-20.04
+    # strategy:
+    #   fail-fast: false
+      # matrix:
+        # install_latest: [ true, false ] #ubuntu-20.04 has a good enough podman.
+    steps:
+      # Checkout push-to-registry action github repository
+      - name: Checkout Push to Registry action
+        uses: actions/checkout@v2
+
+      # - name: Install latest podman
+      #   if: matrix.install_latest
+      #   run: |
+      #     bash .github/install_latest_podman.sh
+
+      - name: Install qemu dependency
+        # we need quemu-user-static for builds other archs with buildah
+        # https://github.com/containers/podman/issues/13924#issuecomment-1103434554
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+
+      - name: Build Image
+        id: build_image
+        uses: redhat-actions/buildah-build@main
+        with:
+          image: ${{ env.IMAGE_NAMESPACE }}
+          tags: ${{ env.IMAGE_TAGS }} latest
+          platforms: linux/386, linux/amd64
+          containerfiles: |
+            ./Dockerfile.gh
+
+      # Push the image manifest to Quay.io (Image Registry)
+      - name: Push To Quay
+        # uses: ./
+        id: push-to-quay
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build_image.outputs.image }}
+          tags: ${{ steps.build_image.outputs.tags }}
+          registry: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Echo outputs
+        run: |
+          echo "${{ toJSON(steps.push-to-quay.outputs) }}"

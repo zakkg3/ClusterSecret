@@ -1,7 +1,7 @@
 clustersecret:
   clustersecret:
     image:
-      repository: flag5/clustersecret
+      repository: quay.io/clustersecret/clustersecret
       tag: 0.0.10
       # use tag__arm32 for ARM builds
     # If Clustersecret is about to create a secret and then it founds it exists:

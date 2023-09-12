@@ -1,5 +1,5 @@
 # ClusterSecret
-![CI](https://github.com/zakkg3/ClusterSecret/workflows/CI/badge.svg) [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4283/badge)](https://bestpractices.coreinfrastructure.org/projects/4283) [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html) [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/clutersecret)](https://artifacthub.io/packages/search?repo=clutersecret)
+![CI](https://github.com/zakkg3/ClusterSecret/workflows/CI/badge.svg) [![Docker Repository on Quay](https://quay.io/repository/clustersecret/clustersecret/status "Docker Repository on Quay")](https://quay.io/repository/clustersecret/clustersecret) [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/clutersecret)](https://artifacthub.io/packages/search?repo=clutersecret) [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/4283/badge)](https://bestpractices.coreinfrastructure.org/projects/4283) [![License](http://img.shields.io/:license-apache-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0.html)
 
 ---
 
@@ -118,10 +118,27 @@ data:
   password: Nzg5MTAxMTIxMgo=
 ```
 
+## images
 
-## Known bugs:
+Images are build and push on tag ('git tag') with Github Actions. You can find them here:
+
+https://quay.io/repository/clustersecret/clustersecret
+
+## default archs  :
+ 
+the following archetecures:
+
+ - linux/386
+ - linux/amd64
+
+are under the image:tag : `quay.io/clustersecret/clustersecret:0.0.10`
+ 
+Alternative architecrues:
  
 
+## Known bugs:
+
+ - check this on issues tab
 
 # Roadmap:
 

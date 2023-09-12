@@ -24,7 +24,7 @@ spec:
             value: "false"
         containers:
         - name: clustersecret
-          image: flag5/clustersecret:0.0.10
+          image: quay.io/clustersecret/clustersecret:0.0.10
           livenessProbe:
             httpGet:
               path: /healthz
