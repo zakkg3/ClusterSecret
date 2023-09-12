@@ -16,4 +16,4 @@ jobs:
           pip install wemake-python-styleguide
       - name: WemakeLint
         run: |
-          flake8 ./src
+          flake8 src

@@ -1,14 +1,13 @@
 import logging
 import unittest
-
-from kubernetes.client import V1ObjectMeta
-
-from csHelper import get_ns_list
 from unittest.mock import Mock
 
+from kubernetes.client import V1ObjectMeta
+from kubernetes_utils import get_ns_list
+
 USER_NAMESPACE_COUNT = 10
-initial_namespaces = ["default", "kube-node-lease", "kube-public", "kube-system"]
-user_namespaces = [f'example-{i}' for i in range(USER_NAMESPACE_COUNT)]
+initial_namespaces = ['default', 'kube-node-lease', 'kube-public', 'kube-system']
+user_namespaces = [f'example-{index}' for index in range(USER_NAMESPACE_COUNT)]
 
 
 class TestClusterSecret(unittest.TestCase):
@@ -54,10 +53,10 @@ class TestClusterSecret(unittest.TestCase):
             {
                 'name': 'avoid all user_namespaces',
                 'body': {
-                    'avoidNamespaces': ['example-*']
+                    'avoidNamespaces': ['example-*'],
                 },
                 'expected': initial_namespaces,
-            }
+            },
         ]
 
         for case in cases:
@@ -66,7 +65,7 @@ class TestClusterSecret(unittest.TestCase):
                 list2=sorted(get_ns_list(
                     logger=logging.getLogger(__name__),
                     body=case['body'],
-                    v1=mock_v1
+                    v1=mock_v1,
                 )),
-                msg=case['name']
+                msg=case['name'],
             )
