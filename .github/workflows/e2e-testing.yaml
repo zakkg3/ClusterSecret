@@ -1,7 +1,6 @@
 name: E2E Testing
 
-on:
-  push:
+on: [push, pull_request]
 
 jobs:
   lint-test:
