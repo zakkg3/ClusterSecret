@@ -2,13 +2,17 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import kopf
-from kubernetes import client
+from kubernetes import client, config
 
 from kubernetes_utils import delete_secret, get_ns_list, sync_secret, patch_clustersecret_status, \
     create_secret_metadata, secret_exists
 
 # In-memory dictionary for all ClusterSecrets in the Cluster. UID -> ClusterSecret Body
 csecs: Dict[str, Any] = {}
+
+# Loading kubeconfig
+config.load_incluster_config()
+
 v1 = client.CoreV1Api()
 custom_objects_api = client.CustomObjectsApi()
 
