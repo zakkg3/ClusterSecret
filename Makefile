@@ -64,3 +64,6 @@ stop-test-env:
 chart-update:
 	helm package charts/cluster-secret/ -d docs/
 	helm repo index ./docs
+
+dev-run:
+	kopf run ./src/handlers.py --verbose -A
