@@ -24,11 +24,7 @@ v1 = client.CoreV1Api()
 custom_objects_api = client.CustomObjectsApi()
 
 
-@kopf.on.delete(
-    group='clustersecret.io',
-    version='v1',
-    kind='clustersecrets',
-)
+@kopf.on.delete('clustersecret.io', 'v1', 'clustersecrets')
 def on_delete(
     body: Dict[str, Any],
     uid: str,
