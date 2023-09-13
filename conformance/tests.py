@@ -172,6 +172,43 @@ class ClusterSecretCases(unittest.TestCase):
             f'secret {name} should be in all user namespaces'
         )
 
+    def test_simple_cluster_secret_deleted(self):
+        name = "simple-cluster-secret-deleted"
+        username_data = "MTIzNDU2Cg=="
+        cluster_secret_manager = ClusterSecretManager(
+            custom_objects_api=custom_objects_api,
+            api_instance=api_instance
+        )
+
+        cluster_secret_manager.create_cluster_secret(
+            name=name,
+            namespace=USER_NAMESPACES[0],
+            data={"username": username_data}
+        )
+
+        # We expect the secret to be in ALL namespaces
+        self.assertTrue(
+            cluster_secret_manager.validate_namespace_secrets(
+                name=name,
+                data={"username": username_data}
+            )
+        )
+
+        cluster_secret_manager.delete_cluster_secret(
+            name=name,
+            namespace=USER_NAMESPACES[0],
+        )
+
+        # We expect the secret to be in NO namespaces
+        self.assertTrue(
+            cluster_secret_manager.validate_namespace_secrets(
+                name=name,
+                data={"username": username_data},
+                namespaces=[],
+            ),
+            f'secret {name} should be deleted from all namespaces.'
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
