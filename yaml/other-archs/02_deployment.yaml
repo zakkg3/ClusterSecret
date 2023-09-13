@@ -20,7 +20,11 @@ spec:
         # - name: regcred
         containers:
         - name: clustersecret
-          image: flag5/clustersecret:0.0.9_arm32
+          image: quay.io/clustersecret/clustersecret:0.0.10-alt
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
           # imagePullPolicy: Always
           # Uncomment next lines for debug:
           # command:
