@@ -33,11 +33,11 @@ spec:
           value: {{ .Values.clustersecret.clustersecret.replace_existing | default "false" | quote }}
         image: {{ .Values.clustersecret.clustersecret.image.repository }}:{{ .Values.clustersecret.clustersecret.image.tag
           | default .Chart.AppVersion }}
+        name: clustersecret
         livenessProbe:
           httpGet:
             path: /healthz
             port: 8080
-        name: clustersecret
           periodSeconds: 120
         resources: {}
       serviceAccountName: {{ include "cluster-secret.fullname" . }}-account
