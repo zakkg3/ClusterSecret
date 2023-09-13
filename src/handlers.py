@@ -46,12 +46,7 @@ def on_delete(
     logger.debug(f'csec {uid} deleted from memory ok')
 
 
-@kopf.on.field(
-    group='clustersecret.io',
-    version='v1',
-    kind='clustersecrets',
-    field='matchNamespace',
-)
+@kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='matchNamespace')
 def on_field_match_namespace(
     old: Optional[List[str]],
     new: List[str],
