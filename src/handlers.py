@@ -8,10 +8,17 @@ from kubernetes_utils import delete_secret, get_ns_list, sync_secret, patch_clus
     create_secret_metadata, secret_exists
 
 # In-memory dictionary for all ClusterSecrets in the Cluster. UID -> ClusterSecret Body
+from os_utils import in_cluster
+
 csecs: Dict[str, Any] = {}
 
 # Loading kubeconfig
-config.load_incluster_config()
+if in_cluster():
+    # Loading kubeconfig
+    config.load_incluster_config()
+else:
+    # Loading using the local kubevonfig.
+    config.load_kube_config()
 
 v1 = client.CoreV1Api()
 custom_objects_api = client.CustomObjectsApi()
