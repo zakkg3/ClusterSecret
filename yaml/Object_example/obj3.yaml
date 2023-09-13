@@ -1,0 +1,8 @@
+# A demo custom resource for the Kopf example operators.
+apiVersion: clustersecret.io/v1
+kind: ClusterSecret
+metadata:
+  namespace: clustersecret
+  name: global-secret3
+data:
+  tls.crt: MTIzNDU2Cg==
