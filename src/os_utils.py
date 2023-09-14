@@ -16,6 +16,6 @@ def get_replace_existing() -> bool:
 
 def in_cluster() -> bool:
     """
-    whether we are running in cluster (on the pod)  or outside (debug mode.)
+    Whether we are running in cluster (on the pod)  or outside (debug mode.)
     """
     return os.getenv('KUBERNETES_SERVICE_HOST', None) is not None
