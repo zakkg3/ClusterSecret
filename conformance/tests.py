@@ -248,7 +248,7 @@ class ClusterSecretCases(unittest.TestCase):
 
     def test_value_from_with_keys_cluster_secret(self):
         cluster_secret_name = "value-from-cluster-secret"
-        secret_name = "basic-secret-example"
+        secret_name = "k8s-basic-secret-example"
 
         username_data = "MTIzNDU2Cg=="
         password_data = "aGloaXBhc3M="
