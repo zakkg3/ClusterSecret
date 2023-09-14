@@ -52,10 +52,9 @@ beta:
 install:
 	helm install clustersecret ./charts/cluster-secret -n clustersecret --create-namespace
 
-test-env:
+start-test-env:
 	podman machine start
 	KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster
-	helm install clustersecret ./charts/cluster-secret -n clustersecret --create-namespace
 
 stop-test-env:
 	KIND_EXPERIMENTAL_PROVIDER=podman kind delete cluster
