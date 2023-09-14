@@ -1,6 +1,4 @@
 import unittest
-
-import pytest
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
@@ -17,28 +15,19 @@ CLUSTER_SECRET_NAMESPACE = "cluster-secret"
 USER_NAMESPACES = ["example-1", "example-2", "example-3"]
 
 
-@pytest.fixture
-def cluster_secret_manager(request) -> ClusterSecretManager:
-    """
-    This fixture adds a finalizers, while using yield is usually recommended, "If a yield fixture raises an exception
-    before yielding, pytest won’t try to run the teardown code after that yield fixture’s yield statement."
-
-    Therefore, we are adding finalizers directly
-    (see https://docs.pytest.org/en/6.2.x/fixture.html#adding-finalizers-directly)
-    """
-    cluster_secret_manager = ClusterSecretManager(
-        custom_objects_api=custom_objects_api,
-        api_instance=api_instance
-    )
-
-    def cleanup():
-        cluster_secret_manager.cleanup()
-
-    request.addfinalizer(cleanup)
-    return cluster_secret_manager
-
-
 class ClusterSecretCases(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.cluster_secret_manager = ClusterSecretManager(
+            custom_objects_api=custom_objects_api,
+            api_instance=api_instance
+        )
+        super().setUp()
+
+    def tearDown(self) -> None:
+        self.cluster_secret_manager.cleanup()
+        super().tearDown()
+
     @classmethod
     def setUpClass(cls) -> None:
         # Wait for the cluster secret pod to be ready before running tests
@@ -55,17 +44,18 @@ class ClusterSecretCases(unittest.TestCase):
                     print(f"Namespace '{namespace_name}' already exists.")
                 else:
                     print(f"Error creating namespace '{namespace_name}': {e}")
+
         super().setUpClass()
 
     def test_running(self):
         pods = api_instance.list_namespaced_pod(namespace=CLUSTER_SECRET_NAMESPACE)
         self.assertEqual(len(pods.items), 1)
 
-    def test_simple_cluster_secret(self, cluster_secret_manager: ClusterSecretManager):
+    def test_simple_cluster_secret(self):
         name = "simple-cluster-secret"
         username_data = "MTIzNDU2Cg=="
 
-        cluster_secret_manager.create_cluster_secret(
+        self.cluster_secret_manager.create_cluster_secret(
             name=name,
             namespace=USER_NAMESPACES[0],
             data={"username": username_data}
@@ -73,18 +63,18 @@ class ClusterSecretCases(unittest.TestCase):
 
         # We expect the secret to be in ALL namespaces
         self.assertTrue(
-            cluster_secret_manager.validate_namespace_secrets(
+            self.cluster_secret_manager.validate_namespace_secrets(
                 name=name,
                 data={"username": username_data},
             )
         )
 
-    def test_complex_cluster_secret(self, cluster_secret_manager: ClusterSecretManager):
+    def test_complex_cluster_secret(self):
         name = "complex-cluster-secret"
         username_data = "MTIzNDU2Cg=="
 
         # Create a secret in all user namespace expect the first one
-        cluster_secret_manager.create_cluster_secret(
+        self.cluster_secret_manager.create_cluster_secret(
             name=name,
             namespace=USER_NAMESPACES[0],
             data={"username": username_data},
@@ -94,20 +84,20 @@ class ClusterSecretCases(unittest.TestCase):
 
         # Ensure the secrets is only present where is to suppose to be
         self.assertTrue(
-            cluster_secret_manager.validate_namespace_secrets(
+            self.cluster_secret_manager.validate_namespace_secrets(
                 name=name,
                 data={"username": username_data},
                 namespaces=USER_NAMESPACES[1:],
             ),
         )
 
-    def test_patch_cluster_secret_data(self, cluster_secret_manager: ClusterSecretManager):
+    def test_patch_cluster_secret_data(self):
         name = "dynamic-cluster-secret"
         username_data = "MTIzNDU2Cg=="
         updated_data = "Nzg5MTAxMTIxMgo="
 
         # Create a secret with username_data
-        cluster_secret_manager.create_cluster_secret(
+        self.cluster_secret_manager.create_cluster_secret(
             name=name,
             namespace=USER_NAMESPACES[0],
             data={"username": username_data},
@@ -115,14 +105,14 @@ class ClusterSecretCases(unittest.TestCase):
 
         # Ensure the secret is created with the right data
         self.assertTrue(
-            cluster_secret_manager.validate_namespace_secrets(
+            self.cluster_secret_manager.validate_namespace_secrets(
                 name=name,
                 data={"username": username_data},
             )
         )
 
         # Update the cluster secret's data
-        cluster_secret_manager.update_data_cluster_secret(
+        self.cluster_secret_manager.update_data_cluster_secret(
             name=name,
             data={"username": updated_data},
             namespace=USER_NAMESPACES[0],
@@ -130,18 +120,18 @@ class ClusterSecretCases(unittest.TestCase):
 
         # Ensure the secrets are updated with the right data (at some point)
         self.assertTrue(
-            cluster_secret_manager.validate_namespace_secrets(
+            self.cluster_secret_manager.validate_namespace_secrets(
                 name=name,
                 data={"username": updated_data},
             ),
             f'secret {name} should be in all user namespaces',
         )
 
-    def test_patch_cluster_secret_match_namespaces(self, cluster_secret_manager: ClusterSecretManager):
+    def test_patch_cluster_secret_match_namespaces(self):
         name = "dynamic-cluster-secret-match-namespaces"
         username_data = "MTIzNDU2Cg=="
 
-        cluster_secret_manager.create_cluster_secret(
+        self.cluster_secret_manager.create_cluster_secret(
             name=name,
             namespace=USER_NAMESPACES[0],
             data={"username": username_data},
@@ -151,7 +141,7 @@ class ClusterSecretCases(unittest.TestCase):
         )
 
         self.assertTrue(
-            cluster_secret_manager.validate_namespace_secrets(
+            self.cluster_secret_manager.validate_namespace_secrets(
                 name=name,
                 data={"username": username_data},
                 namespaces=[
@@ -162,7 +152,7 @@ class ClusterSecretCases(unittest.TestCase):
         )
 
         # Update the cluster match_namespace to ALL user namespace
-        cluster_secret_manager.update_data_cluster_secret(
+        self.cluster_secret_manager.update_data_cluster_secret(
             name=name,
             namespace=USER_NAMESPACES[0],
             match_namespace=USER_NAMESPACES,
@@ -170,7 +160,7 @@ class ClusterSecretCases(unittest.TestCase):
         )
 
         self.assertTrue(
-            cluster_secret_manager.validate_namespace_secrets(
+            self.cluster_secret_manager.validate_namespace_secrets(
                 name=name,
                 data={"username": username_data},
                 namespaces=USER_NAMESPACES,
@@ -178,11 +168,11 @@ class ClusterSecretCases(unittest.TestCase):
             f'secret {name} should be in all user namespaces'
         )
 
-    def test_simple_cluster_secret_deleted(self, cluster_secret_manager: ClusterSecretManager):
+    def test_simple_cluster_secret_deleted(self):
         name = "simple-cluster-secret-deleted"
         username_data = "MTIzNDU2Cg=="
 
-        cluster_secret_manager.create_cluster_secret(
+        self.cluster_secret_manager.create_cluster_secret(
             name=name,
             namespace=USER_NAMESPACES[0],
             data={"username": username_data}
@@ -190,20 +180,20 @@ class ClusterSecretCases(unittest.TestCase):
 
         # We expect the secret to be in ALL namespaces
         self.assertTrue(
-            cluster_secret_manager.validate_namespace_secrets(
+            self.cluster_secret_manager.validate_namespace_secrets(
                 name=name,
                 data={"username": username_data}
             )
         )
 
-        cluster_secret_manager.delete_cluster_secret(
+        self.cluster_secret_manager.delete_cluster_secret(
             name=name,
             namespace=USER_NAMESPACES[0],
         )
 
         # We expect the secret to be in NO namespaces
         self.assertTrue(
-            cluster_secret_manager.validate_namespace_secrets(
+            self.cluster_secret_manager.validate_namespace_secrets(
                 name=name,
                 data={"username": username_data},
                 namespaces=[],
@@ -211,21 +201,21 @@ class ClusterSecretCases(unittest.TestCase):
             f'secret {name} should be deleted from all namespaces.'
         )
 
-    def test_value_from_cluster_secret(self, cluster_secret_manager: ClusterSecretManager):
+    def test_value_from_cluster_secret(self):
         cluster_secret_name = "value-from-cluster-secret"
         secret_name = "basic-secret-example"
 
         username_data = "MTIzNDU2Cg=="
 
         # Create a kubernetes secrets
-        cluster_secret_manager.create_secret(
+        self.cluster_secret_manager.create_secret(
             name=secret_name,
             namespace=USER_NAMESPACES[0],
             data={'username': username_data}
         )
 
         # Create the cluster secret
-        cluster_secret_manager.create_cluster_secret(
+        self.cluster_secret_manager.create_cluster_secret(
             name=cluster_secret_name,
             namespace=USER_NAMESPACES[0],
             secret_key_ref={
@@ -236,14 +226,14 @@ class ClusterSecretCases(unittest.TestCase):
 
         # We expect the secret to be in ALL namespaces
         self.assertTrue(
-            cluster_secret_manager.validate_namespace_secrets(
+            self.cluster_secret_manager.validate_namespace_secrets(
                 name=cluster_secret_name,
                 data={"username": username_data},
             ),
             msg=f'Cluster secret should take the data from the {secret_name} secret.'
         )
 
-    def test_value_from_with_keys_cluster_secret(self, cluster_secret_manager: ClusterSecretManager):
+    def test_value_from_with_keys_cluster_secret(self):
         cluster_secret_name = "value-from-with-keys-cluster-secret"
         secret_name = "k8s-basic-secret-example"
 
@@ -252,14 +242,14 @@ class ClusterSecretCases(unittest.TestCase):
         more_data = "aWlpaWlhYWE="
 
         # Create a kubernetes secrets
-        cluster_secret_manager.create_secret(
+        self.cluster_secret_manager.create_secret(
             name=secret_name,
             namespace=USER_NAMESPACES[0],
             data={'username': username_data, 'password': password_data, 'more-data': more_data}
         )
 
         # Create the cluster secret
-        cluster_secret_manager.create_cluster_secret(
+        self.cluster_secret_manager.create_cluster_secret(
             name=cluster_secret_name,
             namespace=USER_NAMESPACES[0],
             secret_key_ref={
@@ -271,7 +261,7 @@ class ClusterSecretCases(unittest.TestCase):
 
         # We expect the secret to be in ALL namespaces
         self.assertTrue(
-            cluster_secret_manager.validate_namespace_secrets(
+            self.cluster_secret_manager.validate_namespace_secrets(
                 name=cluster_secret_name,
                 data={'username': username_data, 'password': password_data},
             ),
