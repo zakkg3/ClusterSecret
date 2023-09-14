@@ -210,3 +210,7 @@ class ClusterSecretManager:
             sleep(self.retry_delay)
             self.retry_attempts -= 1
         return False
+
+    def cleanup(self):
+        # TODO: cleanup all secrets and cluster secrets created.
+        pass

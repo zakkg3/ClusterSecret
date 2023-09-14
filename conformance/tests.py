@@ -1,5 +1,6 @@
 import unittest
 
+import pytest
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
@@ -14,6 +15,27 @@ custom_objects_api = client.CustomObjectsApi()
 
 CLUSTER_SECRET_NAMESPACE = "cluster-secret"
 USER_NAMESPACES = ["example-1", "example-2", "example-3"]
+
+
+@pytest.fixture
+def cluster_secret_manager(request) -> ClusterSecretManager:
+    """
+    This fixture adds a finalizers, while using yield is usually recommended, "If a yield fixture raises an exception
+    before yielding, pytest won’t try to run the teardown code after that yield fixture’s yield statement."
+
+    Therefore, we are adding finalizers directly
+    (see https://docs.pytest.org/en/6.2.x/fixture.html#adding-finalizers-directly)
+    """
+    cluster_secret_manager = ClusterSecretManager(
+        custom_objects_api=custom_objects_api,
+        api_instance=api_instance
+    )
+
+    def cleanup():
+        cluster_secret_manager.cleanup()
+
+    request.addfinalizer(cleanup)
+    return cluster_secret_manager
 
 
 class ClusterSecretCases(unittest.TestCase):
@@ -39,13 +61,9 @@ class ClusterSecretCases(unittest.TestCase):
         pods = api_instance.list_namespaced_pod(namespace=CLUSTER_SECRET_NAMESPACE)
         self.assertEqual(len(pods.items), 1)
 
-    def test_simple_cluster_secret(self):
+    def test_simple_cluster_secret(self, cluster_secret_manager: ClusterSecretManager):
         name = "simple-cluster-secret"
         username_data = "MTIzNDU2Cg=="
-        cluster_secret_manager = ClusterSecretManager(
-            custom_objects_api=custom_objects_api,
-            api_instance=api_instance
-        )
 
         cluster_secret_manager.create_cluster_secret(
             name=name,
@@ -61,13 +79,9 @@ class ClusterSecretCases(unittest.TestCase):
             )
         )
 
-    def test_complex_cluster_secret(self):
+    def test_complex_cluster_secret(self, cluster_secret_manager: ClusterSecretManager):
         name = "complex-cluster-secret"
         username_data = "MTIzNDU2Cg=="
-        cluster_secret_manager = ClusterSecretManager(
-            custom_objects_api=custom_objects_api,
-            api_instance=api_instance
-        )
 
         # Create a secret in all user namespace expect the first one
         cluster_secret_manager.create_cluster_secret(
@@ -87,14 +101,10 @@ class ClusterSecretCases(unittest.TestCase):
             ),
         )
 
-    def test_patch_cluster_secret_data(self):
+    def test_patch_cluster_secret_data(self, cluster_secret_manager: ClusterSecretManager):
         name = "dynamic-cluster-secret"
         username_data = "MTIzNDU2Cg=="
         updated_data = "Nzg5MTAxMTIxMgo="
-        cluster_secret_manager = ClusterSecretManager(
-            custom_objects_api=custom_objects_api,
-            api_instance=api_instance
-        )
 
         # Create a secret with username_data
         cluster_secret_manager.create_cluster_secret(
@@ -127,13 +137,9 @@ class ClusterSecretCases(unittest.TestCase):
             f'secret {name} should be in all user namespaces',
         )
 
-    def test_patch_cluster_secret_match_namespaces(self):
+    def test_patch_cluster_secret_match_namespaces(self, cluster_secret_manager: ClusterSecretManager):
         name = "dynamic-cluster-secret-match-namespaces"
         username_data = "MTIzNDU2Cg=="
-        cluster_secret_manager = ClusterSecretManager(
-            custom_objects_api=custom_objects_api,
-            api_instance=api_instance
-        )
 
         cluster_secret_manager.create_cluster_secret(
             name=name,
@@ -172,13 +178,9 @@ class ClusterSecretCases(unittest.TestCase):
             f'secret {name} should be in all user namespaces'
         )
 
-    def test_simple_cluster_secret_deleted(self):
+    def test_simple_cluster_secret_deleted(self, cluster_secret_manager: ClusterSecretManager):
         name = "simple-cluster-secret-deleted"
         username_data = "MTIzNDU2Cg=="
-        cluster_secret_manager = ClusterSecretManager(
-            custom_objects_api=custom_objects_api,
-            api_instance=api_instance
-        )
 
         cluster_secret_manager.create_cluster_secret(
             name=name,
@@ -209,16 +211,11 @@ class ClusterSecretCases(unittest.TestCase):
             f'secret {name} should be deleted from all namespaces.'
         )
 
-    def test_value_from_cluster_secret(self):
+    def test_value_from_cluster_secret(self, cluster_secret_manager: ClusterSecretManager):
         cluster_secret_name = "value-from-cluster-secret"
         secret_name = "basic-secret-example"
 
         username_data = "MTIzNDU2Cg=="
-
-        cluster_secret_manager = ClusterSecretManager(
-            custom_objects_api=custom_objects_api,
-            api_instance=api_instance
-        )
 
         # Create a kubernetes secrets
         cluster_secret_manager.create_secret(
@@ -246,18 +243,13 @@ class ClusterSecretCases(unittest.TestCase):
             msg=f'Cluster secret should take the data from the {secret_name} secret.'
         )
 
-    def test_value_from_with_keys_cluster_secret(self):
+    def test_value_from_with_keys_cluster_secret(self, cluster_secret_manager: ClusterSecretManager):
         cluster_secret_name = "value-from-with-keys-cluster-secret"
         secret_name = "k8s-basic-secret-example"
 
         username_data = "MTIzNDU2Cg=="
         password_data = "aGloaXBhc3M="
         more_data = "aWlpaWlhYWE="
-
-        cluster_secret_manager = ClusterSecretManager(
-            custom_objects_api=custom_objects_api,
-            api_instance=api_instance
-        )
 
         # Create a kubernetes secrets
         cluster_secret_manager.create_secret(
