@@ -209,6 +209,83 @@ class ClusterSecretCases(unittest.TestCase):
             f'secret {name} should be deleted from all namespaces.'
         )
 
+    def test_value_from_cluster_secret(self):
+        cluster_secret_name = "value-from-cluster-secret"
+        secret_name = "basic-secret-example"
+
+        username_data = "MTIzNDU2Cg=="
+
+        cluster_secret_manager = ClusterSecretManager(
+            custom_objects_api=custom_objects_api,
+            api_instance=api_instance
+        )
+
+        # Create a kubernetes secrets
+        cluster_secret_manager.create_secret(
+            name=secret_name,
+            namespace=USER_NAMESPACES[0],
+            data={'username': username_data}
+        )
+
+        # Create the cluster secret
+        cluster_secret_manager.create_cluster_secret(
+            name=cluster_secret_name,
+            namespace=USER_NAMESPACES[0],
+            secret_key_ref={
+                'name': secret_name,
+                'namespace': USER_NAMESPACES[0],
+            },
+        )
+
+        # We expect the secret to be in ALL namespaces
+        self.assertTrue(
+            cluster_secret_manager.validate_namespace_secrets(
+                name=cluster_secret_name,
+                data={"username": username_data},
+            ),
+            msg=f'Cluster secret should take the data from the {secret_name} secret.'
+        )
+
+    def test_value_from_with_keys_cluster_secret(self):
+        cluster_secret_name = "value-from-cluster-secret"
+        secret_name = "basic-secret-example"
+
+        username_data = "MTIzNDU2Cg=="
+        password_data = "aGloaXBhc3M="
+        more_data = "aWlpaWlhYWE="
+
+        cluster_secret_manager = ClusterSecretManager(
+            custom_objects_api=custom_objects_api,
+            api_instance=api_instance
+        )
+
+        # Create a kubernetes secrets
+        cluster_secret_manager.create_secret(
+            name=secret_name,
+            namespace=USER_NAMESPACES[0],
+            data={'username': username_data, 'password': password_data, 'more-data': more_data}
+        )
+
+        # Create the cluster secret
+        cluster_secret_manager.create_cluster_secret(
+            name=cluster_secret_name,
+            namespace=USER_NAMESPACES[0],
+            secret_key_ref={
+                'name': secret_name,
+                'namespace': USER_NAMESPACES[0],
+                'keys': ['username', 'password']
+            },
+        )
+
+        # We expect the secret to be in ALL namespaces
+        self.assertTrue(
+            cluster_secret_manager.validate_namespace_secrets(
+                name=cluster_secret_name,
+                data={'username': username_data, 'password': password_data},
+            ),
+            msg=f'Cluster secret should take the data from the {secret_name} secret but only the keys specified.'
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
