@@ -1,4 +1,4 @@
-ARG ARCH=
+ARG ARCH=""
 FROM ${ARCH}python:3.9-slim
 ADD /src /src
 RUN apt update && apt install -y build-essential
