@@ -1,9 +1,16 @@
 import time
-from typing import Dict, Optional, List, Callable, Any
+from typing import Dict, Optional, List, Callable, Mapping, Any
 from kubernetes import client, config
 from kubernetes.client import V1Secret, CoreV1Api, CustomObjectsApi
 from kubernetes.client.rest import ApiException
 from time import sleep
+
+
+def is_subset(_set: Mapping[str, str], _subset: Mapping[str, str]) -> bool:
+    for key, item in _subset.items():
+        if _set.get(key, None) != item:
+            return False
+    return True
 
 
 def wait_for_pod_ready_with_events(pod_selector: dict, namespace: str, timeout_seconds: int = 300):
@@ -52,6 +59,7 @@ class ClusterSecretManager:
     def __init__(self, custom_objects_api: CustomObjectsApi, api_instance: CoreV1Api):
         self.custom_objects_api: CustomObjectsApi = custom_objects_api
         self.api_instance: CoreV1Api = api_instance
+        # immutable after
         self.retry_attempts = 3
         self.retry_delay = 5
 
@@ -167,18 +175,23 @@ class ClusterSecretManager:
                 raise e
 
     def validate_namespace_secrets(
-            self, name: str,
+            self,
+            name: str,
             data: Dict[str, str],
-            namespaces: Optional[List[str]] = None
+            namespaces: Optional[List[str]] = None,
+            labels: Optional[Dict[str, str]] = None,
+            annotations: Optional[Dict[str, str]] = None,
     ) -> bool:
         """
 
         Parameters
         ----------
-        name
-        data
+        name: str
+        data: Dict[str, str]
         namespaces: Optional[List[str]]
             If None, it means the secret should be present in ALL namespaces
+        annotations: Optional[Dict[str, str]]
+        labels: Optional[Dict[str, str]]
 
         Returns
         -------
@@ -199,16 +212,33 @@ class ClusterSecretManager:
                 if secret is None or secret.data != data:
                     return False
 
+                if annotations is not None and not is_subset(secret.metadata.annotations, annotations):
+                    return False
+
+                if labels is not None and not is_subset(secret.metadata.labels, labels):
+                    return False
+
             return True
 
         return self.retry(validate)
 
     def retry(self, f: Callable[[], bool]) -> bool:
-        while self.retry_attempts > 0:
+        """
+        Utility function
+        Parameters
+        ----------
+        f
+
+        Returns
+        -------
+
+        """
+        retry = self.retry_attempts
+        while retry > 0:
             if f():
                 return True
             sleep(self.retry_delay)
-            self.retry_attempts -= 1
+            retry -= 1
         return False
 
     def cleanup(self):

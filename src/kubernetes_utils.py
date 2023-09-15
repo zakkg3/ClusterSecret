@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Mapping
 import re
 
 import kopf
@@ -169,7 +169,10 @@ def sync_secret(
     if 'name' not in body['metadata']:
         raise kopf.TemporaryError('Property name is missing in metadata.')
 
-    sec_name = body['metadata']['name']
+    cs_metadata: Dict[str, Any] = body.get('metadata')
+    sec_name = cs_metadata.get('name')
+    annotations = cs_metadata.get('annotations', None)
+    labels = cs_metadata.get('labels', None)
 
     if 'data' not in body:
         raise kopf.TemporaryError('Property data is missing.')
@@ -203,7 +206,12 @@ def sync_secret(
     secret_type = body.get('type', 'Opaque')
 
     body = V1Secret()
-    body.metadata = create_secret_metadata(name=sec_name, namespace=namespace)
+    body.metadata = create_secret_metadata(
+        name=sec_name,
+        namespace=namespace,
+        annotations=annotations,
+        labels=labels,
+    )
     body.type = secret_type
     body.data = data
     logger.info(f'cloning secret in namespace {namespace}')
@@ -254,7 +262,12 @@ def sync_secret(
         logger.debug(f'Kube exception {e}')
 
 
-def create_secret_metadata(name: str, namespace: str) -> V1ObjectMeta:
+def create_secret_metadata(
+        name: str,
+        namespace: str,
+        annotations: Optional[Mapping[str, str]] = None,
+        labels: Optional[Mapping[str, str]] = None,
+) -> V1ObjectMeta:
     """Create Kubernetes metadata objects.
 
     Parameters
@@ -263,20 +276,28 @@ def create_secret_metadata(name: str, namespace: str) -> V1ObjectMeta:
         The name of the Kubernetes secret.
     namespace: str
         The namespace where the secret will be place.
+    labels: Optional[Dict[str, str]]
+        The secret labels.
+    annotations: Optional[Dict[str, str]]
+        The secrets annotations.
 
     Returns
     -------
     V1ObjectMeta
         Kubernetes metadata object with ClusterSecret annotations.
     """
+
+    _annotations = {
+        CREATE_BY_ANNOTATION: 'ClusterSecrets',
+        VERSION_ANNOTATION: get_version(),
+        LAST_SYNC_ANNOTATION: datetime.now().isoformat(),
+    }.update(annotations or {})
+
     return V1ObjectMeta(
         name=name,
         namespace=namespace,
-        annotations={
-            CREATE_BY_ANNOTATION: 'ClusterSecrets',
-            VERSION_ANNOTATION: get_version(),
-            LAST_SYNC_ANNOTATION: datetime.now().isoformat(),
-        },
+        annotations=_annotations,
+        labels=labels,
     )
 
 

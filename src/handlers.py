@@ -110,6 +110,7 @@ def on_field_data(
     old: Dict[str, str],
     new: Dict[str, str],
     body: Dict[str, Any],
+    meta: kopf.Meta,
     name: str,
     logger: logging.Logger,
     **_,
@@ -130,7 +131,12 @@ def on_field_data(
             api_version='v1',
             data=new,
             kind='Secret',
-            metadata=create_secret_metadata(name=name, namespace=ns),
+            metadata=create_secret_metadata(
+                name=name,
+                namespace=ns,
+                annotations=meta.annotations,
+                labels=meta.labels,
+            ),
             type=secret_type,
         )
         # Ensuring the secret still exist.
