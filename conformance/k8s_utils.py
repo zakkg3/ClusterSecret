@@ -199,7 +199,7 @@ class ClusterSecretManager:
         """
         all_namespaces = [item.metadata.name for item in self.api_instance.list_namespace().items]
 
-        def validate():
+        def validate() -> Optional[str]:
             for namespace in all_namespaces:
 
                 secret = self.get_kubernetes_secret(name=name, namespace=namespace)
@@ -207,22 +207,25 @@ class ClusterSecretManager:
                 if namespaces is not None and namespace not in namespaces:
                     if secret is None:
                         continue
-                    return False
+                    return f''
 
-                if secret is None or secret.data != data:
-                    return False
+                if secret is None:
+                    return f'secret {name} is none in namespace {namespace}.'
+
+                if secret.data != data:
+                    return f'secret {name} data mismatch in namespace {namespace}.'
 
                 if annotations is not None and not is_subset(secret.metadata.annotations, annotations):
-                    return False
+                    return f'secret {name} annotations mismatch in namespace {namespace}.'
 
                 if labels is not None and not is_subset(secret.metadata.labels, labels):
-                    return False
+                    return f'secret {name} labels mismatch in namespace {namespace}.'
 
-            return True
+            return None
 
         return self.retry(validate)
 
-    def retry(self, f: Callable[[], bool]) -> bool:
+    def retry(self, f: Callable[[], Optional[str]]) -> bool:
         """
         Utility function
         Parameters
@@ -233,12 +236,18 @@ class ClusterSecretManager:
         -------
 
         """
-        retry = self.retry_attempts
+        retry: int = self.retry_attempts
+        err: Optional[str] = None
+
         while retry > 0:
-            if f():
+            err = f()
+            if err is None:
                 return True
             sleep(self.retry_delay)
             retry -= 1
+
+        if err is not None:
+            print(f"Retry attempts exhausted. Last error: {err}")
         return False
 
     def cleanup(self):

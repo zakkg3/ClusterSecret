@@ -269,7 +269,7 @@ class ClusterSecretCases(unittest.TestCase):
         )
 
     def test_simple_cluster_secret_with_annotation(self):
-        name = "simple-cluster-secret"
+        name = "simple-cluster-secret-annotation"
         username_data = "MTIzNDU2Cg=="
         annotations = {
             'custom-annotation': 'example',
