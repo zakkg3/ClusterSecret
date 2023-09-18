@@ -3,7 +3,7 @@ name: cluster-secret
 description: ClusterSecret Operator
 kubeVersion: '>= 1.16.0-0'
 type: application
-version: 0.2.1
+version: 0.2.2
 icon: https://clustersecret.io/assets/csninjasmall.png
 sources:
 - https://github.com/zakkg3/ClusterSecret
