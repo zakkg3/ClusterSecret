@@ -129,7 +129,7 @@ def on_field_data(
         logger.info(f'Re Syncing secret {name} in ns {ns}')
         body = client.V1Secret(
             api_version='v1',
-            data=new,
+            data=dict(new),
             kind='Secret',
             metadata=create_secret_metadata(
                 name=name,
@@ -243,5 +243,6 @@ async def startup_fn(logger: logging.Logger, **_):
                 name=metadata.get('name'),
                 namespace=metadata.get('namespace'),
                 data=item.get('data'),
+                synced_namespace=item.get('status', {}).get('create_fn', {}).get('syncedns', []),
             )
         )

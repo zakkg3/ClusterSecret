@@ -7,7 +7,7 @@ import kopf
 from kubernetes.client import CoreV1Api, CustomObjectsApi, exceptions, V1ObjectMeta, rest, V1Secret
 
 from os_utils import get_replace_existing, get_version
-from consts import CREATE_BY_ANNOTATION, LAST_SYNC_ANNOTATION, VERSION_ANNOTATION
+from consts import CREATE_BY_ANNOTATION, LAST_SYNC_ANNOTATION, VERSION_ANNOTATION, BLACK_LISTED_ANNOTATIONS
 
 
 def patch_clustersecret_status(
@@ -215,6 +215,7 @@ def sync_secret(
     body.type = secret_type
     body.data = data
     logger.info(f'cloning secret in namespace {namespace}')
+    logger.debug(f'V1Secret= {body}')
 
     try:
         # Get metadata from secrets (if exist)
@@ -291,7 +292,12 @@ def create_secret_metadata(
         CREATE_BY_ANNOTATION: 'ClusterSecrets',
         VERSION_ANNOTATION: get_version(),
         LAST_SYNC_ANNOTATION: datetime.now().isoformat(),
-    }.update(annotations or {})
+    }
+    _annotations.update(annotations or {})
+
+    # Remove potential useless / dangerous annotations
+    _annotations = {key: value for key, value in _annotations.items() if
+                     not any(key.startswith(prefix) for prefix in BLACK_LISTED_ANNOTATIONS)}
 
     return V1ObjectMeta(
         name=name,
