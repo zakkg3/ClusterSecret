@@ -1,5 +1,5 @@
 import time
-from typing import Dict, Optional, List, Callable
+from typing import Dict, Optional, List, Callable, Any
 from kubernetes import client, config
 from kubernetes.client import V1Secret, CoreV1Api, CustomObjectsApi
 from kubernetes.client.rest import ApiException
@@ -55,16 +55,57 @@ class ClusterSecretManager:
         self.retry_attempts = 3
         self.retry_delay = 5
 
+    def create_secret(
+            self,
+            name: str,
+            namespace: str,
+            data: Dict[str, Any],
+            labels: Optional[Dict[str, str]] = None,
+            annotations: Optional[Dict[str, str]] = None,
+    ):
+        self.api_instance.create_namespaced_secret(
+            namespace=namespace,
+            body=client.V1Secret(
+                metadata=client.V1ObjectMeta(
+                    name=name,
+                    labels=labels,
+                    annotations=annotations,
+                ),
+                data=data,
+            ),
+        )
+
+    @staticmethod
+    def _generate_secret_key_ref_dict(secret_key_ref: Dict[str, str]) -> Dict[str, Any]:
+        if secret_key_ref.get('name', None) is None or secret_key_ref.get('namespace', None) is None:
+            raise Exception(f'secretKeyRef dict should have a name and a namespace property defined.')
+
+        return (
+            {
+                "valueFrom": {
+                    "secretKeyRef": {
+                        "name": secret_key_ref.get('name'),
+                        "namespace": secret_key_ref.get('namespace'),
+                        "keys": secret_key_ref.get('keys'),
+                    },
+                },
+            }
+        )
+
     def create_cluster_secret(
             self,
             name: str,
             namespace: str,
-            data: Dict[str, str],
+            data: Optional[Dict[str, Any]] = None,
+            secret_key_ref: Optional[Dict[str, str]] = None,
             labels: Optional[Dict[str, str]] = None,
             annotations: Optional[Dict[str, str]] = None,
             match_namespace: Optional[List[str]] = None,
             avoid_namespaces: Optional[List[str]] = None,
     ):
+        if data is None and secret_key_ref is None:
+            raise Exception('You need to either define data or secret_key_ref.')
+
         return self.custom_objects_api.create_namespaced_custom_object(
             group="clustersecret.io",
             version="v1",
@@ -73,7 +114,7 @@ class ClusterSecretManager:
                 "apiVersion": "clustersecret.io/v1",
                 "kind": "ClusterSecret",
                 "metadata": {"name": name, "labels": labels, "annotations": annotations},
-                "data": data,
+                "data": data if data is not None else self._generate_secret_key_ref_dict(secret_key_ref),
                 "matchNamespace": match_namespace,
                 "avoidNamespaces": avoid_namespaces,
             },
@@ -169,3 +210,7 @@ class ClusterSecretManager:
             sleep(self.retry_delay)
             self.retry_attempts -= 1
         return False
+
+    def cleanup(self):
+        # TODO: cleanup all secrets and cluster secrets created.
+        pass
