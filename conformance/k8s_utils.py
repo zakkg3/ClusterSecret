@@ -105,7 +105,7 @@ class ClusterSecretManager:
         if data is None and secret_key_ref is None:
             raise Exception('You need to either define data or secret_key_ref.')
 
-        return self.custom_objects_api.create_namespaced_custom_object(
+        return self.custom_objects_api.create_cluster_custom_object(
             group="clustersecret.io",
             version="v1",
             body={
