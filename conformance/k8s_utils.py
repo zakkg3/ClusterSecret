@@ -6,7 +6,10 @@ from kubernetes.client.rest import ApiException
 from time import sleep
 
 
-def is_subset(_set: Mapping[str, str], _subset: Mapping[str, str]) -> bool:
+def is_subset(_set: Optional[Mapping[str, str]], _subset: Optional[Mapping[str, str]]) -> bool:
+    if _set is None:
+        return _subset is None
+
     for key, item in _subset.items():
         if _set.get(key, None) != item:
             return False

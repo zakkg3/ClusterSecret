@@ -123,7 +123,7 @@ def on_field_data(
     logger.debug(f'Updating Object body == {body}')
     syncedns = body.get('status', {}).get('create_fn', {}).get('syncedns', [])
 
-    secret_type = body.get('type', default='Opaque')
+    secret_type = body.get('type', 'Opaque')
 
     for ns in syncedns:
         logger.info(f'Re Syncing secret {name} in ns {ns}')
