@@ -210,7 +210,6 @@ class ClusterSecretCases(unittest.TestCase):
         # Create the cluster secret
         self.cluster_secret_manager.create_cluster_secret(
             name=cluster_secret_name,
-            namespace=USER_NAMESPACES[0],
             secret_key_ref={
                 'name': secret_name,
                 'namespace': USER_NAMESPACES[0],
@@ -244,7 +243,6 @@ class ClusterSecretCases(unittest.TestCase):
         # Create the cluster secret
         self.cluster_secret_manager.create_cluster_secret(
             name=cluster_secret_name,
-            namespace=USER_NAMESPACES[0],
             secret_key_ref={
                 'name': secret_name,
                 'namespace': USER_NAMESPACES[0],
