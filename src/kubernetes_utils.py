@@ -1,21 +1,22 @@
 import logging
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Mapping
 import re
 
 import kopf
 from kubernetes.client import CoreV1Api, CustomObjectsApi, exceptions, V1ObjectMeta, rest, V1Secret
 
 from os_utils import get_replace_existing, get_version
-from consts import CREATE_BY_ANNOTATION, LAST_SYNC_ANNOTATION, VERSION_ANNOTATION
+from consts import CREATE_BY_ANNOTATION, LAST_SYNC_ANNOTATION, VERSION_ANNOTATION, BLACK_LISTED_ANNOTATIONS, \
+    CREATE_BY_AUTHOR, CLUSTER_SECRET_LABEL
 
 
 def patch_clustersecret_status(
-    logger: logging.Logger,
-    namespace: str,
-    name: str,
-    new_status,
-    custom_objects_api: CustomObjectsApi,
+        logger: logging.Logger,
+        namespace: str,
+        name: str,
+        new_status,
+        custom_objects_api: CustomObjectsApi,
 ):
     """Patch the status of a given clustersecret object
     """
@@ -48,9 +49,9 @@ def patch_clustersecret_status(
 
 
 def get_ns_list(
-    logger: logging.Logger,
-    body: Dict[str, Any],
-    v1: CoreV1Api,
+        logger: logging.Logger,
+        body: Dict[str, Any],
+        v1: CoreV1Api,
 ) -> List[str]:
     """Returns a list of namespaces where the secret should be matched
     """
@@ -83,10 +84,10 @@ def get_ns_list(
 
 
 def read_data_secret(
-    logger: logging.Logger,
-    name: str,
-    namespace: str,
-    v1: CoreV1Api,
+        logger: logging.Logger,
+        name: str,
+        namespace: str,
+        v1: CoreV1Api,
 ) -> Dict[str, str]:
     """Gets the data from the 'name' secret in namespace
     """
@@ -107,10 +108,10 @@ def read_data_secret(
 
 
 def delete_secret(
-    logger: logging.Logger,
-    namespace: str,
-    name: str,
-    v1: CoreV1Api,
+        logger: logging.Logger,
+        namespace: str,
+        name: str,
+        v1: CoreV1Api,
 ):
     """Deletes a given secret from a given namespace
     """
@@ -126,10 +127,10 @@ def delete_secret(
 
 
 def secret_exists(
-    logger: logging.Logger,
-    name: str,
-    namespace: str,
-    v1: CoreV1Api,
+        logger: logging.Logger,
+        name: str,
+        namespace: str,
+        v1: CoreV1Api,
 ):
     return secret_metadata(
         logger=logger,
@@ -140,10 +141,10 @@ def secret_exists(
 
 
 def secret_metadata(
-    logger: logging.Logger,
-    name: str,
-    namespace: str,
-    v1: CoreV1Api,
+        logger: logging.Logger,
+        name: str,
+        namespace: str,
+        v1: CoreV1Api,
 ) -> Optional[V1ObjectMeta]:
     try:
         secret = v1.read_namespaced_secret(name, namespace)
@@ -156,10 +157,10 @@ def secret_metadata(
 
 
 def sync_secret(
-    logger: logging.Logger,
-    namespace: str,
-    body: Dict[str, Any],
-    v1: CoreV1Api,
+        logger: logging.Logger,
+        namespace: str,
+        body: Dict[str, Any],
+        v1: CoreV1Api,
 ):
     """Creates a given secret on a given namespace
     """
@@ -169,7 +170,10 @@ def sync_secret(
     if 'name' not in body['metadata']:
         raise kopf.TemporaryError('Property name is missing in metadata.')
 
-    sec_name = body['metadata']['name']
+    cs_metadata: Dict[str, Any] = body.get('metadata')
+    sec_name = cs_metadata.get('name')
+    annotations = cs_metadata.get('annotations', None)
+    labels = cs_metadata.get('labels', None)
 
     if 'data' not in body:
         raise kopf.TemporaryError('Property data is missing.')
@@ -203,10 +207,16 @@ def sync_secret(
     secret_type = body.get('type', 'Opaque')
 
     body = V1Secret()
-    body.metadata = create_secret_metadata(name=sec_name, namespace=namespace)
+    body.metadata = create_secret_metadata(
+        name=sec_name,
+        namespace=namespace,
+        annotations=annotations,
+        labels=labels,
+    )
     body.type = secret_type
     body.data = data
     logger.info(f'cloning secret in namespace {namespace}')
+    logger.debug(f'V1Secret= {body}')
 
     try:
         # Get metadata from secrets (if exist)
@@ -254,7 +264,12 @@ def sync_secret(
         logger.debug(f'Kube exception {e}')
 
 
-def create_secret_metadata(name: str, namespace: str) -> V1ObjectMeta:
+def create_secret_metadata(
+        name: str,
+        namespace: str,
+        annotations: Optional[Mapping[str, str]] = None,
+        labels: Optional[Mapping[str, str]] = None,
+) -> V1ObjectMeta:
     """Create Kubernetes metadata objects.
 
     Parameters
@@ -263,20 +278,38 @@ def create_secret_metadata(name: str, namespace: str) -> V1ObjectMeta:
         The name of the Kubernetes secret.
     namespace: str
         The namespace where the secret will be place.
+    labels: Optional[Dict[str, str]]
+        The secret labels.
+    annotations: Optional[Dict[str, str]]
+        The secrets annotations.
 
     Returns
     -------
     V1ObjectMeta
         Kubernetes metadata object with ClusterSecret annotations.
     """
+
+    _labels = {
+        CLUSTER_SECRET_LABEL: 'true'
+    }
+    _labels.update(labels or {})
+
+    _annotations = {
+        CREATE_BY_ANNOTATION: CREATE_BY_AUTHOR,
+        VERSION_ANNOTATION: get_version(),
+        LAST_SYNC_ANNOTATION: datetime.now().isoformat(),
+    }
+    _annotations.update(annotations or {})
+
+    # Remove potential useless / dangerous annotations
+    _annotations = {key: value for key, value in _annotations.items() if
+                    not any(key.startswith(prefix) for prefix in BLACK_LISTED_ANNOTATIONS)}
+
     return V1ObjectMeta(
         name=name,
         namespace=namespace,
-        annotations={
-            CREATE_BY_ANNOTATION: 'ClusterSecrets',
-            VERSION_ANNOTATION: get_version(),
-            LAST_SYNC_ANNOTATION: datetime.now().isoformat(),
-        },
+        annotations=_annotations,
+        labels=_labels,
     )
 
 
@@ -313,4 +346,3 @@ def get_custom_objects_by_kind(
     except rest.ApiException as e:
         # Properly handle API exceptions
         raise rest.ApiException(f'Error while retrieving custom objects: {e}')
-

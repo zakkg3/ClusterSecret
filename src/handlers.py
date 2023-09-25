@@ -110,6 +110,7 @@ def on_field_data(
     old: Dict[str, str],
     new: Dict[str, str],
     body: Dict[str, Any],
+    meta: kopf.Meta,
     name: str,
     logger: logging.Logger,
     **_,
@@ -122,17 +123,23 @@ def on_field_data(
     logger.debug(f'Updating Object body == {body}')
     syncedns = body.get('status', {}).get('create_fn', {}).get('syncedns', [])
 
-    secret_type = body.get('type', default='Opaque')
+    secret_type = body.get('type', 'Opaque')
 
     for ns in syncedns:
         logger.info(f'Re Syncing secret {name} in ns {ns}')
         body = client.V1Secret(
             api_version='v1',
-            data=new,
+            data={str(key): str(value) for key, value in new.items()},
             kind='Secret',
-            metadata=create_secret_metadata(name=name, namespace=ns),
+            metadata=create_secret_metadata(
+                name=name,
+                namespace=ns,
+                annotations={str(key): str(value) for key, value in meta.annotations.items()},
+                labels={str(key): str(value) for key, value in meta.labels.items()},
+            ),
             type=secret_type,
         )
+        logger.debug(f'body: {body}')
         # Ensuring the secret still exist.
         if secret_exists(logger=logger, name=name, namespace=ns, v1=v1):
             response = v1.replace_namespaced_secret(name=name, namespace=ns, body=body)
@@ -237,5 +244,6 @@ async def startup_fn(logger: logging.Logger, **_):
                 name=metadata.get('name'),
                 namespace=metadata.get('namespace'),
                 data=item.get('data'),
+                synced_namespace=item.get('status', {}).get('create_fn', {}).get('syncedns', []),
             )
         )

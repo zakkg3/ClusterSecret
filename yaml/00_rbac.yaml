@@ -33,7 +33,7 @@ rules:
   # Application: read-only access for watching cluster-wide.
   - apiGroups: [clustersecret.io]
     resources: [clustersecrets]
-    verbs: [list, watch, patch]
+    verbs: [list, watch, patch, get]
 
   # Watch namespaces
   - apiGroups: [""]
