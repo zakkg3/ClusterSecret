@@ -259,6 +259,33 @@ class ClusterSecretCases(unittest.TestCase):
             msg=f'Cluster secret should take the data from the {secret_name} secret but only the keys specified.'
         )
 
+    def test_simple_cluster_secret_with_annotation(self):
+        name = "simple-cluster-secret-annotation"
+        username_data = "MTIzNDU2Cg=="
+        annotations = {
+            'custom-annotation': 'example',
+        }
+        cluster_secret_manager = ClusterSecretManager(
+            custom_objects_api=custom_objects_api,
+            api_instance=api_instance
+        )
+
+        cluster_secret_manager.create_cluster_secret(
+            name=name,
+            namespace=USER_NAMESPACES[0],
+            data={"username": username_data},
+            annotations=annotations,
+        )
+
+        # We expect the secret to be in ALL namespaces
+        self.assertTrue(
+            cluster_secret_manager.validate_namespace_secrets(
+                name=name,
+                data={"username": username_data},
+                annotations=annotations
+            )
+        )
+
 
 if __name__ == '__main__':
     unittest.main()

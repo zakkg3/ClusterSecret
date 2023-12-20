@@ -34,7 +34,6 @@ rules:
   - apiGroups: [clustersecret.io]
     resources: [clustersecrets]
     verbs: [watch, list, get, patch, update, create, delete]
-
   # Watch namespaces
   - apiGroups: [""]
     resources: [namespaces, namespaces/status]
