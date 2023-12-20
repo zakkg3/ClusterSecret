@@ -272,7 +272,6 @@ class ClusterSecretCases(unittest.TestCase):
 
         cluster_secret_manager.create_cluster_secret(
             name=name,
-            namespace=USER_NAMESPACES[0],
             data={"username": username_data},
             annotations=annotations,
         )
