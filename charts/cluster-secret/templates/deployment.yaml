@@ -23,6 +23,8 @@ spec:
         app: clustersecret
       {{- include "cluster-secret.selectorLabels" . | nindent 8 }}
     spec:
+      securityContext:
+        runAsUser: 100 # 100 is set by the container and can NOT be changed here - this would result in a getpwuid() error
       containers:
       - env:
         - name: KUBERNETES_CLUSTER_DOMAIN
@@ -34,6 +36,8 @@ spec:
         image: {{ .Values.clustersecret.clustersecret.image.repository }}:{{ .Values.clustersecret.clustersecret.image.tag
           | default .Chart.AppVersion }}
         name: clustersecret
+        securityContext:
+          runAsUser: 100 # 100 is set by the container and can NOT be changed here - this would result in a getpwuid() error
         livenessProbe:
           httpGet:
             path: /healthz
