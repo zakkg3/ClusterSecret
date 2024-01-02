@@ -1,7 +1,7 @@
 clustersecret:
   clustersecret:
     image:
-      repository: quay.io/clustersecret/clustersecret:0.0.10
+      repository: quay.io/clustersecret/clustersecret
       tag: 0.0.10
       # use tag-alt for ARM and other alternative builds - read the readme for more information
       # If Clustersecret is about to create a secret and then it founds it exists:
