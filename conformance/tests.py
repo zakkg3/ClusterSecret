@@ -57,7 +57,6 @@ class ClusterSecretCases(unittest.TestCase):
 
         self.cluster_secret_manager.create_cluster_secret(
             name=name,
-            namespace=USER_NAMESPACES[0],
             data={"username": username_data}
         )
 
@@ -76,7 +75,6 @@ class ClusterSecretCases(unittest.TestCase):
         # Create a secret in all user namespace expect the first one
         self.cluster_secret_manager.create_cluster_secret(
             name=name,
-            namespace=USER_NAMESPACES[0],
             data={"username": username_data},
             match_namespace=["example-*"],
             avoid_namespaces=[USER_NAMESPACES[0]]
@@ -99,7 +97,6 @@ class ClusterSecretCases(unittest.TestCase):
         # Create a secret with username_data
         self.cluster_secret_manager.create_cluster_secret(
             name=name,
-            namespace=USER_NAMESPACES[0],
             data={"username": username_data},
         )
 
@@ -115,7 +112,6 @@ class ClusterSecretCases(unittest.TestCase):
         self.cluster_secret_manager.update_data_cluster_secret(
             name=name,
             data={"username": updated_data},
-            namespace=USER_NAMESPACES[0],
         )
 
         # Ensure the secrets are updated with the right data (at some point)
@@ -133,7 +129,6 @@ class ClusterSecretCases(unittest.TestCase):
 
         self.cluster_secret_manager.create_cluster_secret(
             name=name,
-            namespace=USER_NAMESPACES[0],
             data={"username": username_data},
             match_namespace=[
                 USER_NAMESPACES[0]
@@ -154,7 +149,6 @@ class ClusterSecretCases(unittest.TestCase):
         # Update the cluster match_namespace to ALL user namespace
         self.cluster_secret_manager.update_data_cluster_secret(
             name=name,
-            namespace=USER_NAMESPACES[0],
             match_namespace=USER_NAMESPACES,
             data={"username": username_data},
         )
@@ -174,7 +168,6 @@ class ClusterSecretCases(unittest.TestCase):
 
         self.cluster_secret_manager.create_cluster_secret(
             name=name,
-            namespace=USER_NAMESPACES[0],
             data={"username": username_data}
         )
 
@@ -217,7 +210,6 @@ class ClusterSecretCases(unittest.TestCase):
         # Create the cluster secret
         self.cluster_secret_manager.create_cluster_secret(
             name=cluster_secret_name,
-            namespace=USER_NAMESPACES[0],
             secret_key_ref={
                 'name': secret_name,
                 'namespace': USER_NAMESPACES[0],
@@ -251,7 +243,6 @@ class ClusterSecretCases(unittest.TestCase):
         # Create the cluster secret
         self.cluster_secret_manager.create_cluster_secret(
             name=cluster_secret_name,
-            namespace=USER_NAMESPACES[0],
             secret_key_ref={
                 'name': secret_name,
                 'namespace': USER_NAMESPACES[0],
@@ -281,7 +272,6 @@ class ClusterSecretCases(unittest.TestCase):
 
         cluster_secret_manager.create_cluster_secret(
             name=name,
-            namespace=USER_NAMESPACES[0],
             data={"username": username_data},
             annotations=annotations,
         )

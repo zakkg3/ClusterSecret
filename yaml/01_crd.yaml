@@ -4,7 +4,7 @@ kind: CustomResourceDefinition
 metadata:
   name: clustersecrets.clustersecret.io
 spec:
-  scope: Namespaced
+  scope: Cluster
   group: clustersecret.io
   versions:
     - name: v1

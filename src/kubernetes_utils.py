@@ -12,11 +12,10 @@ from consts import CREATE_BY_ANNOTATION, LAST_SYNC_ANNOTATION, VERSION_ANNOTATIO
 
 
 def patch_clustersecret_status(
-        logger: logging.Logger,
-        namespace: str,
-        name: str,
-        new_status,
-        custom_objects_api: CustomObjectsApi,
+    logger: logging.Logger,
+    name: str,
+    new_status,
+    custom_objects_api: CustomObjectsApi,
 ):
     """Patch the status of a given clustersecret object
     """
@@ -25,10 +24,9 @@ def patch_clustersecret_status(
     plural = 'clustersecrets'
 
     # Retrieve the clustersecret object
-    clustersecret = custom_objects_api.get_namespaced_custom_object(
+    clustersecret = custom_objects_api.get_cluster_custom_object(
         group=group,
         version=version,
-        namespace=namespace,
         plural=plural,
         name=name,
     )
@@ -38,10 +36,9 @@ def patch_clustersecret_status(
     logger.debug(f'Updated clustersecret manifest: {clustersecret}')
 
     # Perform a patch operation to update the custom resource
-    custom_objects_api.patch_namespaced_custom_object(
+    custom_objects_api.patch_cluster_custom_object(
         group=group,
         version=version,
-        namespace=namespace,
         plural=plural,
         name=name,
         body=clustersecret,

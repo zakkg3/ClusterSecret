@@ -106,7 +106,6 @@ class ClusterSecretManager:
     def create_cluster_secret(
             self,
             name: str,
-            namespace: str,
             data: Optional[Dict[str, Any]] = None,
             secret_key_ref: Optional[Dict[str, str]] = None,
             labels: Optional[Dict[str, str]] = None,
@@ -117,10 +116,9 @@ class ClusterSecretManager:
         if data is None and secret_key_ref is None:
             raise Exception('You need to either define data or secret_key_ref.')
 
-        return self.custom_objects_api.create_namespaced_custom_object(
+        return self.custom_objects_api.create_cluster_custom_object(
             group="clustersecret.io",
             version="v1",
-            namespace=namespace,
             body={
                 "apiVersion": "clustersecret.io/v1",
                 "kind": "ClusterSecret",
@@ -135,16 +133,14 @@ class ClusterSecretManager:
     def update_data_cluster_secret(
             self,
             name: str,
-            namespace: str,
             data: Dict[str, str],
             match_namespace: Optional[List[str]] = None,
             avoid_namespaces: Optional[List[str]] = None,
     ):
-        self.custom_objects_api.patch_namespaced_custom_object(
+        self.custom_objects_api.patch_cluster_custom_object(
             name=name,
             group="clustersecret.io",
             version="v1",
-            namespace=namespace,
             body={
                 "apiVersion": "clustersecret.io/v1",
                 "kind": "ClusterSecret",
@@ -160,11 +156,10 @@ class ClusterSecretManager:
             name: str,
             namespace: str
     ):
-        self.custom_objects_api.delete_namespaced_custom_object(
+        self.custom_objects_api.delete_cluster_custom_object(
             name=name,
             group="clustersecret.io",
             version="v1",
-            namespace=namespace,
             plural="clustersecrets",
         )
 

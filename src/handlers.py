@@ -14,6 +14,8 @@ csecs_cache: Cache = MemoryCache()
 
 from os_utils import in_cluster
 
+csecs: Dict[str, Any] = {}
+
 # Loading kubeconfig
 if in_cluster():
     # Loading kubeconfig
@@ -98,7 +100,6 @@ def on_field_match_namespace(
     logger.debug(f'Patching clustersecret {name} in namespace {namespace}')
     patch_clustersecret_status(
         logger=logger,
-        namespace=namespace,
         name=name,
         new_status={'create_fn': {'syncedns': updated_matched}},
         custom_objects_api=custom_objects_api,

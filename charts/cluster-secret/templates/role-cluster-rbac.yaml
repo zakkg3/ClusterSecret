@@ -39,10 +39,13 @@ rules:
   resources:
   - clustersecrets
   verbs:
-  - list
   - watch
-  - patch
+  - list
   - get
+  - patch
+  - update
+  - create
+  - delete
 - apiGroups:
   - ""
   resources:
