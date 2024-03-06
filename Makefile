@@ -1,10 +1,14 @@
 IMG_NAMESPACE = flag5
 IMG_NAME = clustersecret
 IMG_FQNAME = $(IMG_NAMESPACE)/$(IMG_NAME)
-IMG_VERSION = 0.0.10-beta
+IMG_VERSION = 0.0.10
 
 .PHONY: container push clean 
 all: container
+
+build:
+	uname | grep "Darwin" && podman machine start
+	podman build -t $(IMG_FQNAME):$(IMG_VERSION) .
 
 
 container:
