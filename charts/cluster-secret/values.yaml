@@ -9,3 +9,8 @@ image:
 kubernetesClusterDomain: cluster.local
 
 
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
