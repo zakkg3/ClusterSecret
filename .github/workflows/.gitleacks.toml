@@ -1,0 +1,6 @@
+[allowlist]
+description = "global allow list"
+paths = [
+  '''*/yaml/Object_example/*.yaml''',
+  '''*/conformance/tests.py'''
+]
