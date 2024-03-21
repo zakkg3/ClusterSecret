@@ -3,15 +3,16 @@ name: E2E Testing
 on: [push, pull_request]
 
 jobs:
-  lint-test:
+  e2e-tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         kind-node-images:
+          - kindest/node:v1.29.2@sha256:51a1434a5397193442f0be2a297b488b6c919ce8a3931be0ce822606ea5ca245
+          - kindest/node:v1.28.7@sha256:9bc6c451a289cf96ad0bbaf33d416901de6fd632415b076ab05f5fa7e4f65c58
           - kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72
           - kindest/node:v1.26.6@sha256:6e2d8b28a5b601defe327b98bd1c2d1930b49e5d8c512e1895099e4504007adb
           - kindest/node:v1.25.11@sha256:227fa11ce74ea76a0474eeefb84cb75d8dad1b08638371ecf0e86259b35be0c8
-          - kindest/node:v1.24.15@sha256:7db4f8bea3e14b82d12e044e25e34bd53754b7f2b0e9d56df21774e6f66a70ab
 
     steps:
       - name: Checkout
@@ -57,7 +58,7 @@ jobs:
         run: kind load docker-image cluster-secret:${{ github.sha }} --name=chart-testing
 
       - name: Run helm install
-        run: helm install cluster-secret ./charts/cluster-secret -n cluster-secret --create-namespace --set clustersecret.clustersecret.image.repository=cluster-secret,clustersecret.clustersecret.image.tag=${{ github.sha }}
+        run: helm install cluster-secret ./charts/cluster-secret -n cluster-secret --create-namespace --set image.repository=cluster-secret,image.tag=${{ github.sha }}
 
       - run: pip3 install -r conformance/requirements.txt
         name: Install python requirements
