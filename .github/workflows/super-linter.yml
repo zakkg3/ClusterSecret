@@ -31,6 +31,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_PYTHON: true
           LINTER_RULES_PATH: `.github/workflows/linters`
-          # GITLEAKS_CONFIG_FILE: .github/workflows/.gitleaks.toml
+
 
 
