@@ -29,5 +29,7 @@ jobs:
         env:
           # To report GitHub Actions status checks
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG_FILE: .github/workflows/.gitleaks.toml
+          VALIDATE_PYTHON: true
+          # GITLEAKS_CONFIG_FILE: .github/workflows/.gitleaks.toml
+
 
