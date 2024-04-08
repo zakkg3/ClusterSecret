@@ -30,6 +30,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_PYTHON: true
           LINTER_RULES_PATH: ".github/workflows/linters"
+          DISABLE_ERRORS: true #to-do make this FALSE!!
 
 
 

@@ -141,22 +141,10 @@ Alternative architecrues:
 
 # Roadmap:
 
-## Tag 0.0.9:
+TO-DO: enable super linter -> DISABLE_ERRORS
+ 
+ 
 
- - [x] Fix #59
- - [x] implement `source` to specify a source secret to sync instead of `data` field. (https://github.com/zakkg3/ClusterSecret/issues/3)
- - [x] Fix bug #48 
- 
- 
-## Tag 0.1.0 :
-- [ ] update base-image to latest
-- [ ] update kopf package to latest
-- [ ] react to changes on source secret. #36
-- [ ] add source from Externalsecrets or other providers. 
-
- 
- * * *
- 
 # Support
  
  If you need support, start with the troubleshooting guide: Run it in debug mode.
