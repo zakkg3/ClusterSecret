@@ -1,3 +1,4 @@
+imagePullSecrets: []
 image:
   repository: quay.io/clustersecret/clustersecret
   tag: 0.0.10

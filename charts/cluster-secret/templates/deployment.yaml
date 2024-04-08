@@ -25,6 +25,10 @@ spec:
     spec:
       securityContext:
         runAsUser: 100 # 100 is set by the container and can NOT be changed here - this would result in a getpwuid() error
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
       - env:
         - name: KUBERNETES_CLUSTER_DOMAIN
