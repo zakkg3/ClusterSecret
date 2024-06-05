@@ -14,8 +14,6 @@ csecs_cache: Cache = MemoryCache()
 
 from os_utils import in_cluster
 
-csecs: Dict[str, Any] = {}
-
 # Loading kubeconfig
 if in_cluster():
     # Loading kubeconfig
