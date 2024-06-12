@@ -1,2 +1,6 @@
 src/__pycache__/
+src/tests/__pycache__/
 yaml/Object_example/debug-*
+.vscode
+.coverage
+lcov.info

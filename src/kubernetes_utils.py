@@ -36,7 +36,7 @@ def patch_clustersecret_status(
     logger.debug(f'Updated clustersecret manifest: {clustersecret}')
 
     # Perform a patch operation to update the custom resource
-    custom_objects_api.patch_cluster_custom_object(
+    return custom_objects_api.patch_cluster_custom_object(
         group=group,
         version=version,
         plural=plural,
