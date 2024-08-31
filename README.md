@@ -3,7 +3,7 @@
 ---
 
 ## Kubernetes ClusterSecret 
-[*clustersecret.io*](https://clustersecret.io/)
+[*clustersecret.com*](https://clustersecret.com/)
 
 Cluster wide secrets
 
@@ -13,7 +13,7 @@ ClusterSecret operator makes sure all the matching namespaces have the secret av
  - Any change on the ClusterSecret will update all related secrets. Including changing the match pattern. 
  - Deleting the ClusterSecret deletes "child" secrets (all cloned secrets) too.
 
-Full documentation available at [https://clustersecret.io](https://clustersecret.io/)
+Full documentation available at [https://clustersecret.com](https://clustersecret.com/)
 
 <img src="https://github.com/zakkg3/ClusterSecret/blob/master/docs/clusterSecret.png" alt="Clustersecret diagram">
 
