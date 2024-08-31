@@ -6,7 +6,7 @@ entries:
     created: "2023-08-31T10:14:09.390015667Z"
     description: ClusterSecret Operator
     digest: c02abd8cc4c6a1950705ba1353e6740659507032de5d26e9703db721db067131
-    icon: https://clustersecret.io/assets/csninjasmall.png
+    icon: https://clustersecret.com/assets/csninjasmall.png
     kubeVersion: '>= 1.16.0-0'
     maintainers:
     - email: zakkg3@gmail.com

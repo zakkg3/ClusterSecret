@@ -4,7 +4,7 @@ description: ClusterSecret Operator
 kubeVersion: '>= 1.16.0-0'
 type: application
 version: 0.4.2
-icon: https://clustersecret.io/assets/csninjasmall.png
+icon: https://clustersecret.com/assets/csninjasmall.png
 sources:
 - https://github.com/zakkg3/ClusterSecret
 appVersion: "0.0.10"

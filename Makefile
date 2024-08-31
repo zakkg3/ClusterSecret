@@ -65,7 +65,7 @@ stop-test-env:
 	podman machine stop
 
 chart-update:
-	# deprecated, see workflows. chart.clustersecret.io from branch gh-pages on /root folder.
+	# deprecated, see workflows. chart.clustersecret.com from branch gh-pages on /root folder.
 	helm package charts/cluster-secret/ -d docs/
 	helm repo index ./docs
 
