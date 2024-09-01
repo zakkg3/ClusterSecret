@@ -1,5 +1,5 @@
 #  ClusterSecret 
-[*clustersecret.io*](https://clustersecret.io/)
+[*clustersecret.com*](https://clustersecret.com/)
 
 Global inter-namespace cluster secrets - Secrets that work across namespaces.
 
