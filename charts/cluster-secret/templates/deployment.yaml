@@ -23,9 +23,9 @@ spec:
         app: clustersecret
       {{- include "cluster-secret.selectorLabels" . | nindent 8 }}
       annotations:
-{{- if .Values.podAnnotations }}
-{{ toYaml .Values.podAnnotations | indent 8 }}
-{{- end }}
+        {{- range $key, $value := .Values.podAnnotations }}
+        {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 8 }}
+        {{- end }}
     spec:
       securityContext:
         runAsUser: 100 # 100 is set by the container and can NOT be changed here - this would result in a getpwuid() error
