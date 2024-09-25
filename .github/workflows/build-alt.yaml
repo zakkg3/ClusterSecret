@@ -1,11 +1,11 @@
 # Docker build images on tag
 name: Build&Push Alt Images
-on:
-  push:
-    tags:
-      - 'only-alts'
-#          echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
-#          echo "Tag name from github.ref_name: ${{  github.ref_name }}"
+on: [push]
+#   push:
+#     tags:
+#       - 'only-alts'
+# #          echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
+# #          echo "Tag name from github.ref_name: ${{  github.ref_name }}"
 
 env:
   IMAGE_TAGS: ${{  github.ref_name }}
@@ -16,7 +16,7 @@ env:
 jobs:
   build-push-quay:
     name: Build&Push Alt
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     # strategy:
     #   fail-fast: false
       # matrix:
@@ -45,7 +45,7 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
           tags: alt-${{ env.IMAGE_TAGS }}
-          platforms: linux/s390x, linux/arm/v5, linux/arm/v7, linux/arm64/v8 #, linux/mips64le, linux/ppc64le, 
+          platforms: linux/arm/v5, linux/arm/v7, linux/arm64/v8, linux/s390x #, linux/mips64le, linux/ppc64le, 
           containerfiles: |
             ./Dockerfile-others.gh
 
