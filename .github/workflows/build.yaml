@@ -37,6 +37,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-user-static
+          sudo apt-get install -y rustc
 
       - name: Build Image
         id: build_image
@@ -44,7 +45,7 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
           tags: ${{ env.IMAGE_TAGS }} latest
-          platforms: linux/386, linux/amd64, linux/arm/v5, linux/arm/v7, linux/arm64/v8
+          platforms: linux/386, linux/amd64
           containerfiles: |
             ./Dockerfile.gh
 
