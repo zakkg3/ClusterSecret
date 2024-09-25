@@ -1,5 +1,5 @@
 # Docker build images on tag
-name: BuildAlt Images
+name: Test Builds Images
 on: [pull_request]
 
 env:
