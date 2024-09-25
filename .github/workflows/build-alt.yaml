@@ -39,13 +39,43 @@ jobs:
           sudo apt-get install -y qemu-user-static
           sudo apt-get install -y rustc
 
-      - name: Build alt Images
+      - name: Build alt Image armv5
         id: build_alt_image
         uses: redhat-actions/buildah-build@main
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
           tags: alt-${{ env.IMAGE_TAGS }}
-          platforms: linux/arm/v5, linux/arm/v7, linux/arm64/v8, linux/s390x #, linux/mips64le, linux/ppc64le, 
+          platforms: linux/arm/v5
+          containerfiles: |
+            ./Dockerfile-others.gh
+
+      - name: Build alt Image s390
+        id: build_alt_image
+        uses: redhat-actions/buildah-build@main
+        with:
+          image: ${{ env.IMAGE_NAMESPACE }}
+          tags: alt-${{ env.IMAGE_TAGS }}
+          platforms: linux/s390x
+          containerfiles: |
+            ./Dockerfile-others.gh
+
+      - name: Build alt Image armv8
+        id: build_alt_image
+        uses: redhat-actions/buildah-build@main
+        with:
+          image: ${{ env.IMAGE_NAMESPACE }}
+          tags: alt-${{ env.IMAGE_TAGS }}
+          platforms: linux/arm64/v8
+          containerfiles: |
+            ./Dockerfile-others.gh
+
+      - name: Build alt Image armv7
+        id: build_alt_image
+        uses: redhat-actions/buildah-build@main
+        with:
+          image: ${{ env.IMAGE_NAMESPACE }}
+          tags: alt-${{ env.IMAGE_TAGS }}
+          platforms: linux/arm/v7
           containerfiles: |
             ./Dockerfile-others.gh
 
