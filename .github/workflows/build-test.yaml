@@ -39,7 +39,7 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
           tags: ${{ env.IMAGE_TAGS }}
-          platforms: llinux/amd64
+          platforms: linux/amd64
           containerfiles: |
             ./Dockerfile.gh
 
