@@ -69,5 +69,9 @@ chart-update:
 	helm package charts/cluster-secret/ -d docs/
 	helm repo index ./docs
 
-dev-run:
+dev-prepare:
+	kubectl apply -f ./yaml/00_rbac.yaml
+	kubectl apply -f ./yaml/01_crd.yaml
+
+dev-run: dev-prepare
 	kopf run ./src/handlers.py --verbose -A
