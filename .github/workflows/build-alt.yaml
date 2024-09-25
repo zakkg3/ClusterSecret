@@ -3,7 +3,7 @@ name: Build&Push Alt Images
 on:
   push:
     tags:
-      - '*'
+      - 'only-alts'
 #          echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
 #          echo "Tag name from github.ref_name: ${{  github.ref_name }}"
 
@@ -37,6 +37,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-user-static
+          sudo apt-get install -y rustc
 
       - name: Build alt Images
         id: build_alt_image
