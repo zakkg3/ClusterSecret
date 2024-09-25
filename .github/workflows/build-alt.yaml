@@ -14,7 +14,7 @@ env:
   IMAGE_NAMESPACE : clustersecret
 
 jobs:
-  build-push-quay:
+  build-push-quay-v5:
     name: Build&Push Alt
     runs-on: ubuntu-24.04
     # strategy:
@@ -49,6 +49,31 @@ jobs:
           containerfiles: |
             ./Dockerfile-others.gh
 
+  build-push-quay-s390:
+    name: Build&Push Alt
+    runs-on: ubuntu-24.04
+    # strategy:
+    #   fail-fast: false
+      # matrix:
+        # install_latest: [ true, false ] #ubuntu-20.04 has a good enough podman.
+    steps:
+      # Checkout push-to-registry action github repository
+      - name: Checkout Push to Registry action
+        uses: actions/checkout@v2
+
+      # - name: Install latest podman
+      #   if: matrix.install_latest
+      #   run: |
+      #     bash .github/install_latest_podman.sh
+
+      - name: Install qemu dependency
+        # we need quemu-user-static for builds other archs with buildah
+        # https://github.com/containers/podman/issues/13924#issuecomment-1103434554
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+          sudo apt-get install -y rustc
+
       - name: Build alt Image s390
         id: build_alt_image390
         uses: redhat-actions/buildah-build@main
@@ -59,6 +84,31 @@ jobs:
           containerfiles: |
             ./Dockerfile-others.gh
 
+  build-push-quay-armv8:
+    name: Build&Push Alt
+    runs-on: ubuntu-24.04
+    # strategy:
+    #   fail-fast: false
+      # matrix:
+        # install_latest: [ true, false ] #ubuntu-20.04 has a good enough podman.
+    steps:
+      # Checkout push-to-registry action github repository
+      - name: Checkout Push to Registry action
+        uses: actions/checkout@v2
+
+      # - name: Install latest podman
+      #   if: matrix.install_latest
+      #   run: |
+      #     bash .github/install_latest_podman.sh
+
+      - name: Install qemu dependency
+        # we need quemu-user-static for builds other archs with buildah
+        # https://github.com/containers/podman/issues/13924#issuecomment-1103434554
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+          sudo apt-get install -y rustc
+
       - name: Build alt Image armv8
         id: build_alt_imagev8
         uses: redhat-actions/buildah-build@main
@@ -68,6 +118,31 @@ jobs:
           platforms: linux/arm64/v8
           containerfiles: |
             ./Dockerfile-others.gh
+
+  build-push-quay-armv7:
+    name: Build&Push Alt
+    runs-on: ubuntu-24.04
+    # strategy:
+    #   fail-fast: false
+      # matrix:
+        # install_latest: [ true, false ] #ubuntu-20.04 has a good enough podman.
+    steps:
+      # Checkout push-to-registry action github repository
+      - name: Checkout Push to Registry action
+        uses: actions/checkout@v2
+
+      # - name: Install latest podman
+      #   if: matrix.install_latest
+      #   run: |
+      #     bash .github/install_latest_podman.sh
+
+      - name: Install qemu dependency
+        # we need quemu-user-static for builds other archs with buildah
+        # https://github.com/containers/podman/issues/13924#issuecomment-1103434554
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+          sudo apt-get install -y rustc
 
       - name: Build alt Image armv7
         id: build_alt_imagev7
