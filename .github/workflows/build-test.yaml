@@ -1,11 +1,6 @@
 # Docker build images on tag
-name: Build&Push Alt Images
-on:
-  push:
-    tags:
-      - 'test-alts'
-#          echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
-#          echo "Tag name from github.ref_name: ${{  github.ref_name }}"
+name: BuildAlt Images
+on: [pull_request]
 
 env:
   IMAGE_TAGS: ${{  github.ref_name }}
@@ -14,8 +9,8 @@ env:
   IMAGE_NAMESPACE : clustersecret
 
 jobs:
-  build-push-quay-v5:
-    name: Build&Push Alt
+  build-amd64:
+    name: Build amd64
     runs-on: ubuntu-24.04
     # strategy:
     #   fail-fast: false
@@ -37,20 +32,63 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y qemu-user-static
-          sudo apt-get install -y rustc
 
-      # - name: Build alt Image armv5 # not working 
-      #   id: build_alt_imagev5
-      #   uses: redhat-actions/buildah-build@main
-      #   with:
-      #     image: ${{ env.IMAGE_NAMESPACE }}
-      #     tags: alt-${{ env.IMAGE_TAGS }}
-      #     platforms: linux/arm/v5
-      #     containerfiles: |
-      #       ./Dockerfile-others.gh
+      - name: Build amd64
+        id: build_image386
+        uses: redhat-actions/buildah-build@main
+        with:
+          image: ${{ env.IMAGE_NAMESPACE }}
+          tags: ${{ env.IMAGE_TAGS }}
+          platforms: llinux/amd64
+          containerfiles: |
+            ./Dockerfile.gh
 
-  build-push-quay-s390:
-    name: Build&Push Alt
+      - name: Echo outputs
+        run: |
+          echo "${{ toJSON(steps.push-to-quay.outputs) }}"
+
+
+  build-386:
+    name: Build 386
+    runs-on: ubuntu-24.04
+    # strategy:
+    #   fail-fast: false
+      # matrix:
+        # install_latest: [ true, false ] #ubuntu-20.04 has a good enough podman.
+    steps:
+      # Checkout push-to-registry action github repository
+      - name: Checkout Push to Registry action
+        uses: actions/checkout@v2
+
+      # - name: Install latest podman
+      #   if: matrix.install_latest
+      #   run: |
+      #     bash .github/install_latest_podman.sh
+
+      - name: Install qemu dependency
+        # we need quemu-user-static for builds other archs with buildah
+        # https://github.com/containers/podman/issues/13924#issuecomment-1103434554
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user-static
+
+      - name: Build alt Image 386
+        id: build_image386
+        uses: redhat-actions/buildah-build@main
+        with:
+          image: ${{ env.IMAGE_NAMESPACE }}
+          tags: ${{ env.IMAGE_TAGS }}
+          platforms: linux/386
+          containerfiles: |
+            ./Dockerfile.gh
+
+      - name: Echo outputs
+        run: |
+          echo "${{ toJSON(steps.push-to-quay.outputs) }}"
+
+
+  build-s390:
+    name: Builds 390
     runs-on: ubuntu-24.04
     # strategy:
     #   fail-fast: false
@@ -75,17 +113,22 @@ jobs:
           sudo apt-get install -y rustc
 
       - name: Build alt Image s390
-        id: build_alt_image390
+        id: build_image390
         uses: redhat-actions/buildah-build@main
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
-          tags: alt-${{ env.IMAGE_TAGS }}
+          tags: ${{ env.IMAGE_TAGS }}
           platforms: linux/s390x
           containerfiles: |
-            ./Dockerfile-others.gh
+            ./Dockerfile.gh
 
-  build-push-quay-armv8:
-    name: Build&Push Alt
+      - name: Echo outputs
+        run: |
+          echo "${{ toJSON(steps.push-to-quay.outputs) }}"
+
+
+  build-armv8:
+    name: Build armv8
     runs-on: ubuntu-24.04
     # strategy:
     #   fail-fast: false
@@ -114,13 +157,17 @@ jobs:
         uses: redhat-actions/buildah-build@main
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
-          tags: alt-${{ env.IMAGE_TAGS }}
+          tags: ${{ env.IMAGE_TAGS }}
           platforms: linux/arm64/v8
           containerfiles: |
-            ./Dockerfile-others.gh
+            ./Dockerfile.gh
 
-  build-push-quay-armv7:
-    name: Build&Push Alt
+      - name: Echo outputs
+        run: |
+          echo "${{ toJSON(steps.push-to-quay.outputs) }}"
+
+  build-armv7:
+    name: Build armv7
     runs-on: ubuntu-24.04
     # strategy:
     #   fail-fast: false
@@ -149,22 +196,10 @@ jobs:
         uses: redhat-actions/buildah-build@main
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
-          tags: alt-${{ env.IMAGE_TAGS }}
+          tags: ${{ env.IMAGE_TAGS }}
           platforms: linux/arm/v7
           containerfiles: |
-            ./Dockerfile-others.gh
-
-      # Push the image manifest to Quay.io (Image Registry)
-      # - name: Push To Quay
-      #   # uses: ./
-      #   id: push-to-quay
-      #   uses: redhat-actions/push-to-registry@v2
-      #   with:
-      #     image: ${{ steps.build_alt_image.outputs.image }}
-      #     tags: ${{ steps.build_alt_image.outputs.tags }}
-      #     registry: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAMESPACE }}
-      #     username: ${{ secrets.REGISTRY_USER }}
-      #     password: ${{ secrets.REGISTRY_PASSWORD }}
+            ./Dockerfile.gh
 
       - name: Echo outputs
         run: |
