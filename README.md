@@ -5,8 +5,6 @@
 ## Kubernetes ClusterSecret 
 [*clustersecret.com*](https://clustersecret.com/)
 
-# note clustersecret.io domain is deprecated. use clustersecret.com from now on.
-
 Cluster wide secrets
 
 ClusterSecret operator makes sure all the matching namespaces have the secret available and up to date.
