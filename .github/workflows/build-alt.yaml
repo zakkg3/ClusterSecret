@@ -40,7 +40,7 @@ jobs:
           sudo apt-get install -y rustc
 
       - name: Build alt Image armv5
-        id: build_alt_image
+        id: build_alt_imagev5
         uses: redhat-actions/buildah-build@main
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
@@ -50,7 +50,7 @@ jobs:
             ./Dockerfile-others.gh
 
       - name: Build alt Image s390
-        id: build_alt_image
+        id: build_alt_image390
         uses: redhat-actions/buildah-build@main
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
@@ -60,7 +60,7 @@ jobs:
             ./Dockerfile-others.gh
 
       - name: Build alt Image armv8
-        id: build_alt_image
+        id: build_alt_imagev8
         uses: redhat-actions/buildah-build@main
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
@@ -70,7 +70,7 @@ jobs:
             ./Dockerfile-others.gh
 
       - name: Build alt Image armv7
-        id: build_alt_image
+        id: build_alt_imagev7
         uses: redhat-actions/buildah-build@main
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
