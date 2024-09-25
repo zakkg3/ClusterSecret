@@ -1,11 +1,12 @@
 # Docker build images on tag
 name: Build&Push Images
-on:
-  push:
-    tags:
-      - '*'
-#          echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
-#          echo "Tag name from github.ref_name: ${{  github.ref_name }}"
+on: [push]
+
+#   push:
+#     tags:
+#       - '*'
+# #          echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
+# #          echo "Tag name from github.ref_name: ${{  github.ref_name }}"
 
 env:
   IMAGE_TAGS: ${{  github.ref_name }}
@@ -45,7 +46,7 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAMESPACE }}
           tags: ${{ env.IMAGE_TAGS }} latest
-          platforms: linux/386, linux/amd64, linux/arm/v5, linux/arm/v7, linux/arm64/v8, linux/s390x #, linux/mips64le, linux/ppc64le, 
+          platforms: linux/386, linux/amd64, linux/arm/v7, linux/arm64/v8, linux/s390x #, linux/mips64le, linux/ppc64le, 
           containerfiles: |
             ./Dockerfile.gh
 
