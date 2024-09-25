@@ -199,7 +199,7 @@ jobs:
           tags: ${{ env.IMAGE_TAGS }}
           platforms: linux/arm/v7
           containerfiles: |
-            ./Dockerfile.gh
+            ./Dockerfile-others.gh
 
       - name: Echo outputs
         run: |
