@@ -6,7 +6,9 @@ on:
       - '*'
 #          echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
 #          echo "Tag name from github.ref_name: ${{  github.ref_name }}"
-
+  pull_request:
+    types:
+      - opened
 env:
   IMAGE_TAGS: ${{  github.ref_name }}
   REGISTRY_USER: clustersecret
