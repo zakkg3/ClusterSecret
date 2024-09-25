@@ -65,10 +65,15 @@ Clustersecrets automates this. It keep track of any modification in your secret 
 
 ## Requirements
 
-Current version `0.0.10` is tested for Kubernetes >= 1.19 up to 1.27.3
-For ARM architectures use `<tag>_arm32` tag
-
+Current version `0.0.11` is tested for Kubernetes >= 1.19 up to 1.27.3
 For older kubernetes (<1.19) use the image tag `0.0.6` in your helm values file.
+
+architectures available (0.0.11):
+
+SHA256 ed12e8f3e630 | linux | 386
+SHA256 91b0285f5398 | linux | amd64
+SHA256 cad79c68cb8c | linux | s390x
+SHA256 637f3be7850a | linux | arm64
 
 ## Install
 
@@ -76,7 +81,7 @@ For older kubernetes (<1.19) use the image tag `0.0.6` in your helm values file.
 
 ```bash
 helm repo add clustersecret https://charts.clustersecret.com/
-helm install clustersecret clustersecret/cluster-secret --version 0.4.0 -n clustersecret --create-namespace
+helm install clustersecret clustersecret/cluster-secret --version 0.4.3 -n clustersecret --create-namespace
 ```
 
 # with just kubectl
@@ -122,18 +127,6 @@ data:
 Images are build and push on tag ('git tag') with Github Actions. You can find them here:
 
 https://quay.io/repository/clustersecret/clustersecret
-
-## default archs  :
- 
-the following archetecures:
-
- - linux/386
- - linux/amd64
-
-are under the image:tag : `quay.io/clustersecret/clustersecret:0.0.10`
- 
-Alternative architecrues:
- 
 
 ## Known bugs:
 
