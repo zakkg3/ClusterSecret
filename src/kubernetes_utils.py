@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Optional, Dict, Any, List, Mapping
+from typing import Optional, Dict, Any, List, Mapping, Tuple, Iterator
 import re
 
 import kopf
@@ -8,7 +8,7 @@ from kubernetes.client import CoreV1Api, CustomObjectsApi, exceptions, V1ObjectM
 
 from os_utils import get_replace_existing, get_version
 from consts import CREATE_BY_ANNOTATION, LAST_SYNC_ANNOTATION, VERSION_ANNOTATION, BLACK_LISTED_ANNOTATIONS, \
-    CREATE_BY_AUTHOR, CLUSTER_SECRET_LABEL
+    BLACK_LISTED_LABELS, CREATE_BY_AUTHOR, CLUSTER_SECRET_LABEL
 
 
 def patch_clustersecret_status(
@@ -286,27 +286,36 @@ def create_secret_metadata(
         Kubernetes metadata object with ClusterSecret annotations.
     """
 
-    _labels = {
+    def filter_dict(
+            prefixes: List[str],
+            base: Dict[str, str],
+            source: Optional[Mapping[str, str]] = None
+    ) -> Iterator[Tuple[str, str]]:
+        """ Remove potential useless / dangerous annotations and labels"""
+        for item in base.items():
+            yield item
+        if source is not None:
+            for item in source.items():
+                key, _ = item
+                if not any(key.startswith(prefix) for prefix in prefixes):
+                    yield item
+
+    base_labels = {
         CLUSTER_SECRET_LABEL: 'true'
     }
-    _labels.update(labels or {})
-
-    _annotations = {
+    base_annotations = {
         CREATE_BY_ANNOTATION: CREATE_BY_AUTHOR,
         VERSION_ANNOTATION: get_version(),
         LAST_SYNC_ANNOTATION: datetime.now().isoformat(),
     }
-    _annotations.update(annotations or {})
 
-    # Remove potential useless / dangerous annotations
-    _annotations = {key: value for key, value in _annotations.items() if
-                    not any(key.startswith(prefix) for prefix in BLACK_LISTED_ANNOTATIONS)}
-
+    _annotations = filter_dict(BLACK_LISTED_ANNOTATIONS, base_annotations, annotations)
+    _labels = filter_dict(BLACK_LISTED_LABELS, base_labels, labels)
     return V1ObjectMeta(
         name=name,
         namespace=namespace,
-        annotations=_annotations,
-        labels=_labels,
+        annotations=dict(_annotations),
+        labels=dict(_labels),
     )
 
 
