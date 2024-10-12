@@ -7,7 +7,7 @@ version: 0.4.4
 icon: https://clustersecret.com/assets/csninjasmall.png
 sources:
 - https://github.com/zakkg3/ClusterSecret
-appVersion: "0.0.11"
+appVersion: "0.0.12"
 maintainers:
 - email: zakkg3@gmail.com
   name: zakkg3
