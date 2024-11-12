@@ -35,7 +35,7 @@ spec:
       {{- end }}
       containers:
       - env:
-        {{- .Values.env | default [] | toYAML | nindent 8 }}
+        {{- .Values.env | toYaml | nindent 8 }}
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ .Values.kubernetesClusterDomain }}
         - name: CLUSTER_SECRET_VERSION
