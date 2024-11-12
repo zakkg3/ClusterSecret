@@ -6,10 +6,10 @@ from unittest.mock import Mock
 
 from kubernetes.client import V1ObjectMeta
 
-from consts import CREATE_BY_ANNOTATION, LAST_SYNC_ANNOTATION, VERSION_ANNOTATION, BLACK_LISTED_ANNOTATIONS, \
-    BLACK_LISTED_LABELS, CREATE_BY_AUTHOR, CLUSTER_SECRET_LABEL
+from consts import CREATE_BY_ANNOTATION, LAST_SYNC_ANNOTATION, VERSION_ANNOTATION, BLOCKED_ANNOTATIONS, \
+    CREATE_BY_AUTHOR, CLUSTER_SECRET_LABEL
 from kubernetes_utils import get_ns_list, create_secret_metadata
-from os_utils import get_version
+from os_utils import get_version, get_blocked_labels
 
 USER_NAMESPACE_COUNT = 10
 initial_namespaces = ['default', 'kube-node-lease', 'kube-public', 'kube-system']
@@ -100,8 +100,8 @@ class TestClusterSecret(unittest.TestCase):
         ]
 
         attributes_black_lists = dict(
-            labels=BLACK_LISTED_LABELS,
-            annotations=BLACK_LISTED_ANNOTATIONS,
+            labels=get_blocked_labels(),
+            annotations=BLOCKED_ANNOTATIONS,
         )
 
         test_cases: list[Tuple[dict[str, str], dict[str, str]]] = [

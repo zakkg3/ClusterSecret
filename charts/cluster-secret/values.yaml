@@ -7,6 +7,11 @@ image:
   # Default is to ignore it via false setting. (to not loose any unintentional data)
   # It can also be replaced, just set value to true.
   replace_existing: 'false'
+
+env:
+  - name: BLOCKED_LABELS
+    value: app.kubernetes.io # it's a comma (,) separated list
+
 kubernetesClusterDomain: cluster.local
 
 
