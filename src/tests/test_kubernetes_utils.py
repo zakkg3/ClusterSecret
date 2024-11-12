@@ -99,7 +99,7 @@ class TestClusterSecret(unittest.TestCase):
             (LAST_SYNC_ANNOTATION, is_iso_format)
         ]
 
-        attributes_black_lists = dict(
+        attributes_blocked_lists = dict(
             labels=get_blocked_labels(),
             annotations=BLOCKED_ANNOTATIONS,
         )
@@ -140,15 +140,15 @@ class TestClusterSecret(unittest.TestCase):
 
             self.assertIsInstance(obj=subject, cls=V1ObjectMeta, msg='returned value has correct type')
 
-            for attribute, black_list in attributes_black_lists.items():
+            for attribute, blocked_list in attributes_blocked_lists.items():
                 attribute_object = subject.__getattribute__(attribute)
                 self.assertIsNotNone(obj=attribute_object, msg=f'attribute "{attribute}" is not None')
 
                 for key in attribute_object.keys():
                     self.assertIsInstance(obj=key, cls=str, msg=f'the {attribute} key is a string')
-                    for black_listed_label_prefix in black_list:
+                    for blocked_listed_label_prefix in blocked_list:
                         self.assertFalse(
-                            expr=key.startswith(black_listed_label_prefix),
+                            expr=key.startswith(blocked_listed_label_prefix),
                             msg=f'{attribute} key does not match black listed prefix'
                         )
 
