@@ -20,12 +20,11 @@ def get_replace_existing() -> bool:
 
 @cache
 def get_blocked_labels() -> list[str]:
-    blocked_labels = os.getenv('BLOCKED_LABELS')
+    if blocked_labels := os.getenv('BLOCKED_LABELS'):
+        return [label.strip() for label in blocked_labels.split(',')]
 
-    if not blocked_labels:
-        return BLOCKED_LABELS
+    return BLOCKED_LABELS
 
-    return [label.strip() for label in blocked_labels.split(',')]
 
 @cache
 def in_cluster() -> bool:
