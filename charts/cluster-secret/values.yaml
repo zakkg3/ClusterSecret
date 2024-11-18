@@ -10,7 +10,7 @@ image:
 
 env:
   - name: BLOCKED_LABELS
-    value: app.kubernetes.io # it's a comma (,) separated list
+    value: app.kubernetes.io  # a comma (,) separated list
 
 kubernetesClusterDomain: cluster.local
 
