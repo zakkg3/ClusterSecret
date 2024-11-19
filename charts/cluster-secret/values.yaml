@@ -3,12 +3,13 @@ image:
   repository: quay.io/clustersecret/clustersecret
   tag: 0.0.12
   # use tag-alt for ARM and other alternative builds - read the readme for more information
-  # If Clustersecret is about to create a secret and then it founds it exists:
-  # Default is to ignore it via false setting. (to not loose any unintentional data)
-  # It can also be replaced, just set value to true.
-  replace_existing: 'false'
-kubernetesClusterDomain: cluster.local
 
+# If Clustersecret is about to create a secret and then it founds it exists:
+# Default is to ignore it via false setting. (to not loose any unintentional data)
+# It can also be replaced, just set value to true.
+replace_existing: 'false'
+
+kubernetesClusterDomain: cluster.local
 
 nodeSelector: {}
 
