@@ -9,6 +9,10 @@ image:
 # It can also be replaced, just set value to true.
 replace_existing: 'false'
 
+env:
+  - name: BLOCKED_LABELS
+    value: app.kubernetes.io  # a comma (,) separated list
+
 kubernetesClusterDomain: cluster.local
 
 nodeSelector: {}

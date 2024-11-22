@@ -6,9 +6,9 @@ import re
 import kopf
 from kubernetes.client import CoreV1Api, CustomObjectsApi, exceptions, V1ObjectMeta, rest, V1Secret
 
-from os_utils import get_replace_existing, get_version
-from consts import CREATE_BY_ANNOTATION, LAST_SYNC_ANNOTATION, VERSION_ANNOTATION, BLACK_LISTED_ANNOTATIONS, \
-    BLACK_LISTED_LABELS, CREATE_BY_AUTHOR, CLUSTER_SECRET_LABEL
+from os_utils import get_blocked_labels, get_replace_existing, get_version
+from consts import CREATE_BY_ANNOTATION, LAST_SYNC_ANNOTATION, VERSION_ANNOTATION, BLOCKED_ANNOTATIONS, \
+    CREATE_BY_AUTHOR, CLUSTER_SECRET_LABEL
 
 
 def patch_clustersecret_status(
@@ -309,8 +309,8 @@ def create_secret_metadata(
         LAST_SYNC_ANNOTATION: datetime.now().isoformat(),
     }
 
-    _annotations = filter_dict(BLACK_LISTED_ANNOTATIONS, base_annotations, annotations)
-    _labels = filter_dict(BLACK_LISTED_LABELS, base_labels, labels)
+    _annotations = filter_dict(BLOCKED_ANNOTATIONS, base_annotations, annotations)
+    _labels = filter_dict(get_blocked_labels(), base_labels, labels)
     return V1ObjectMeta(
         name=name,
         namespace=namespace,
