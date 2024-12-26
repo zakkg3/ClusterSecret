@@ -1,6 +1,6 @@
 imagePullSecrets: []
 image:
-  repository: artifactory.ulinedm.com/docker/openshift/uclustersecret
+  repository: quay.io/clustersecret/clustersecret
   tag: 0.0.12
   # use tag-alt for ARM and other alternative builds - read the readme for more information
 
