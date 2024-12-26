@@ -52,22 +52,45 @@ def get_ns_list(
 ) -> List[str]:
     """Returns a list of namespaces where the secret should be matched
     """
-    # Get matchNamespace or default to all
-    match_namespace = body.get('matchNamespace', ['.*'])
+    # Get matchLabels or default to None
+    match_labels = body.get('matchLabels', None)
+
+    # Get matchedSetsJoin or default to "union"
+    matched_sets_join = body.get('matchedSetsJoin', 'union')
+
+    # Get matchNamespace or set default based on match_labels and join strategy
+    match_namespace = body.get('matchNamespace', [] if (match_labels and matched_sets_join == 'union') else ['.*'])
 
     # Get avoidNamespaces or default to None
     avoid_namespaces = body.get('avoidNamespaces', None)
 
-    # Collect all namespaces names
-    nss = [ns.metadata.name for ns in v1.list_namespace().items]
+    # Collect all namespace names and labels
+    ns_with_labels = {ns.metadata.name:ns.metadata.labels for ns in v1.list_namespace().items}
+    nss = ns_with_labels.keys()
     matched_ns = []
     avoided_ns = []
 
     # Iterate over all matchNamespace
     for match_ns in match_namespace:
         matched_ns.extend([ns for ns in nss if re.match(match_ns, ns)])
-        logger.debug(f'Matched namespaces: {", ".join(matched_ns)} match pattern: {match_ns}')
+        logger.debug(f'Matched namespaces: [{", ".join(matched_ns)}] match pattern: {match_ns}')
 
+    if match_labels:
+      for label_key,label_value in match_labels.items():
+        label_ns = [ns for ns,labels in ns_with_labels.items() if
+                     label_key in labels and
+                     labels[label_key] == label_value]
+        logger.debug(f'Matched namespaces: [{", ".join(label_ns)}] match label: {label_key}: {label_value}')
+
+        if matched_sets_join == 'intersection':
+          matched_ns = list(set(matched_ns).intersection(set(label_ns)))
+          logger.debug(f'Intersection: [{", ".join(matched_ns)}]')
+          if matched_ns == []:
+            return []
+        else:
+          matched_ns.extend(label_ns)
+          logger.debug(f'Union: [{", ".join(matched_ns)}]')
+    
     # If avoidNamespaces is None simply return our matched list
     if not avoid_namespaces:
         return matched_ns
