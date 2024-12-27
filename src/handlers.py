@@ -118,8 +118,6 @@ def on_field_data(
     logger: logging.Logger,
     **_,
 ):
-    namespace = body['data']['valueFrom']['secretKeyRef']['namespace']
-
     logger.debug(f'Data changed: {old} -> {new}')
     if old is None:
         logger.debug('This is a new object: Ignoring')
@@ -134,7 +132,6 @@ def on_field_data(
     if cached_cluster_secret is None:
         logger.error('Received an event for an unknown ClusterSecret.')
 
-    updated_syncedns = syncedns.copy()
     for ns in syncedns:
         logger.info(f'Re Syncing secret {name} in ns {ns}')
         sync_secret(logger, ns, body, v1)
