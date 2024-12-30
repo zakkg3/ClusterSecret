@@ -60,8 +60,6 @@ def on_field_match_namespace(
     logger: logging.Logger,
     **_,
 ):
-    namespace = body['data']['valueFrom']['secretKeyRef']['namespace']
-
     logger.debug(f'Namespaces changed: {old} -> {new}')
 
     if old is None:
@@ -92,7 +90,6 @@ def on_field_match_namespace(
     csecs_cache.set_cluster_secret(BaseClusterSecret(
         uid=uid,
         name=name,
-        namespace=namespace,
         body=body,
         synced_namespace=updated_matched,
     ))
@@ -148,7 +145,6 @@ async def create_fn(
 ):
     # get all ns matching.
     matchedns = get_ns_list(logger, body, v1)
-    namespace = body['data']['valueFrom']['secretKeyRef']['namespace']
 
     # sync in all matched NS
     logger.info(f'Syncing on Namespaces: {matchedns}')
@@ -164,7 +160,6 @@ async def create_fn(
     csecs_cache.set_cluster_secret(BaseClusterSecret(
         uid=uid,
         name=name,
-        namespace=namespace or "",
         body=body,
         synced_namespace=matchedns,
     ))
@@ -236,7 +231,6 @@ async def startup_fn(logger: logging.Logger, **_):
             BaseClusterSecret(
                 uid=metadata.get('uid'),
                 name=metadata.get('name'),
-                namespace=metadata.get('namespace', ''),
                 body=item,
                 synced_namespace=item.get('status', {}).get('create_fn', {}).get('syncedns', []),
             )
