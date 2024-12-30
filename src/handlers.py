@@ -7,7 +7,7 @@ from kubernetes import client, config
 
 from cache import Cache, MemoryCache
 from kubernetes_utils import delete_secret, get_ns_list, sync_secret, patch_clustersecret_status, \
-    create_secret_metadata, secret_exists, get_custom_objects_by_kind
+    create_secret_metadata, secret_exists, secret_belongs, get_custom_objects_by_kind
 from models import BaseClusterSecret
 
 # In-memory dictionary for all ClusterSecrets in the Cluster. UID -> ClusterSecret Body
@@ -53,7 +53,7 @@ def on_delete(
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='matchNamespace')
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='matchLabels')
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='matchedSetsJoin')
-def on_field_match_namespace(
+def on_match_fields(
     old: Optional[List[str]],
     new: List[str],
     name: str,
@@ -62,7 +62,6 @@ def on_field_match_namespace(
     logger: logging.Logger,
     **_,
 ):
-    namespace = body['data']['valueFrom']['secretKeyRef']['namespace']
     logger.debug(f'Namespaces changed: {old} -> {new}')
 
     if old is None:
@@ -83,7 +82,7 @@ def on_field_match_namespace(
         sync_secret(logger, secret_namespace, body, v1)
 
     for secret_namespace in to_remove:
-        delete_secret(logger, secret_namespace, name, v1=v1)
+        delete_secret(logger, secret_namespace, name, v1)
 
     cached_cluster_secret = csecs_cache.get_cluster_secret(uid)
     if cached_cluster_secret is None:
@@ -93,7 +92,6 @@ def on_field_match_namespace(
     csecs_cache.set_cluster_secret(BaseClusterSecret(
         uid=uid,
         name=name,
-        namespace=namespace,
         body=body,
         synced_namespace=updated_matched,
     ))
@@ -119,7 +117,10 @@ def on_field_data(
     logger: logging.Logger,
     **_,
 ):
-    namespace = body['data']['valueFrom']['secretKeyRef']['namespace']
+    if 'valueFrom' in body['data']:
+        namespace = body['data']['valueFrom']['secretKeyRef']['namespace']
+    else:
+        namespace = ''
     logger.debug(f'Data changed: {old} -> {new}')
     if old is None:
         logger.debug('This is a new object: Ignoring')
@@ -151,67 +152,66 @@ async def create_fn(
 ):
     # get all ns matching.
     matchedns = get_ns_list(logger, body, v1)
-    namespace = body['data']['valueFrom']['secretKeyRef']['namespace']
 
     # sync in all matched NS
     logger.info(f'Syncing on Namespaces: {matchedns}')
     for ns in matchedns:
         sync_secret(logger, ns, body, v1)
 
+    # Updating the cache
+    csecs_cache.set_cluster_secret(BaseClusterSecret(
+        uid=uid,
+        name=name,
+        body=body,
+        synced_namespace=matchedns,
+    ))
+
     # store status in memory
     cached_cluster_secret = csecs_cache.get_cluster_secret(uid)
     if cached_cluster_secret is None:
         logger.error('Received an event for an unknown ClusterSecret.')
 
-    # Updating the cache
-    csecs_cache.set_cluster_secret(BaseClusterSecret(
-        uid=uid,
-        name=name,
-        namespace=namespace or "",
-        body=body,
-        synced_namespace=matchedns,
-    ))
-
-    # return for what ??? Should be deleted ??
-    return {'syncedns': matchedns}
-
 
 @kopf.on.create('', 'v1', 'namespaces')
+@kopf.on.field('', 'v1', 'namespaces', field='metadata.labels')
 async def namespace_watcher(logger: logging.Logger, meta: kopf.Meta, **_):
     """Watch for namespace events
     """
-    new_ns = meta.name
-    logger.debug(f'New namespace created: {new_ns} re-syncing')
-    ns_new_list = []
+    ns = meta.name
+    logger.debug(f'Namespace event: {ns} re-syncing')
     for cluster_secret in csecs_cache.all_cluster_secret():
         obj_body = cluster_secret.body
         name = cluster_secret.name
 
-        matcheddns = cluster_secret.synced_namespace
+        matchedns = cluster_secret.synced_namespace
 
-        logger.debug(f'Old matched namespace: {matcheddns} - name: {name}')
-        ns_new_list = get_ns_list(logger, obj_body, v1)
-        logger.debug(f'new matched list: {ns_new_list}')
-        if new_ns in ns_new_list:
-            logger.debug(f'Cloning secret {name} into the new namespace {new_ns}')
+        logger.debug(f'Old matched namespace: {matchedns} - name: {name}')
+        is_match = secret_belongs(logger, obj_body, meta)
+        if is_match and not ns in matchedns:
+            matchedns.append(ns)
+            logger.debug(f'Cloning secret {name} into namespace {ns}')
             sync_secret(
                 logger=logger,
-                namespace=new_ns,
+                namespace=ns,
                 body=obj_body,
                 v1=v1,
             )
 
-            # if there is a new matching ns, refresh cache
-            cluster_secret.synced_namespace = ns_new_list
+        elif not is_match and ns in matchedns:
+            matchedns.remove(ns)
+            delete_secret(logger, ns, name, v1)
+
+        # Update cache and clustersecret status if matchedns changed
+        if matchedns != cluster_secret.synced_namespace:
+            cluster_secret.synced_namespace = matchedns
             csecs_cache.set_cluster_secret(cluster_secret)
 
-        # update ns_new_list on the object so then we also delete from there
-        patch_clustersecret_status(
-            logger=logger,
-            name=cluster_secret.name,
-            new_status={'create_fn': {'syncedns': ns_new_list}},
-            custom_objects_api=custom_objects_api,
-        )
+            patch_clustersecret_status(
+                logger=logger,
+                name=cluster_secret.name,
+                new_status={'create_fn': {'syncedns': matchedns}},
+                custom_objects_api=custom_objects_api,
+            )
 
 
 @kopf.on.startup()
@@ -239,7 +239,6 @@ async def startup_fn(logger: logging.Logger, **_):
             BaseClusterSecret(
                 uid=metadata.get('uid'),
                 name=metadata.get('name'),
-                namespace=metadata.get('namespace', ''),
                 body=item,
                 synced_namespace=item.get('status', {}).get('create_fn', {}).get('syncedns', []),
             )
