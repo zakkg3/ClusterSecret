@@ -166,17 +166,13 @@ async def create_fn(
         synced_namespace=matchedns,
     ))
 
-    # store status in memory
-    cached_cluster_secret = csecs_cache.get_cluster_secret(uid)
-    if cached_cluster_secret is None:
-        logger.error('Received an event for an unknown ClusterSecret.')
-
 
 @kopf.on.create('', 'v1', 'namespaces')
 @kopf.on.field('', 'v1', 'namespaces', field='metadata.labels')
 async def namespace_watcher(logger: logging.Logger, meta: kopf.Meta, **_):
     """Watch for namespace events
     """
+    logger.setLevel(logging.DEBUG)
     ns = meta.name
     logger.debug(f'Namespace event: {ns} re-syncing')
     for cluster_secret in csecs_cache.all_cluster_secret():
