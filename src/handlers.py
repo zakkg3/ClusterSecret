@@ -55,7 +55,6 @@ def on_field_match_namespace(
     old: Optional[List[str]],
     new: List[str],
     name: str,
-    namespace: str,
     body,
     uid: str,
     logger: logging.Logger,
@@ -91,7 +90,6 @@ def on_field_match_namespace(
     csecs_cache.set_cluster_secret(BaseClusterSecret(
         uid=uid,
         name=name,
-        namespace=namespace,
         body=body,
         synced_namespace=updated_matched,
     ))
@@ -113,7 +111,6 @@ def on_field_data(
     body: Dict[str, Any],
     meta: kopf.Meta,
     name: str,
-    namespace: Optional[str],
     uid: str,
     logger: logging.Logger,
     **_,
@@ -132,55 +129,16 @@ def on_field_data(
     if cached_cluster_secret is None:
         logger.error('Received an event for an unknown ClusterSecret.')
 
-    updated_syncedns = syncedns.copy()
     for ns in syncedns:
         logger.info(f'Re Syncing secret {name} in ns {ns}')
-        ns_sec_body = client.V1Secret(
-            api_version='v1',
-            data={str(key): str(value) for key, value in new.items()},
-            kind='Secret',
-            metadata=create_secret_metadata(
-                name=name,
-                namespace=ns,
-                annotations={str(key): str(value) for key, value in meta.annotations.items()},
-                labels={str(key): str(value) for key, value in meta.labels.items()},
-            ),
-            type=secret_type,
-        )
-        logger.debug(f'body: {ns_sec_body}')
-        # Ensuring the secret still exist.
-        if secret_exists(logger=logger, name=name, namespace=ns, v1=v1):
-            response = v1.replace_namespaced_secret(name=name, namespace=ns, body=ns_sec_body)
-        else:
-            try:
-                v1.read_namespace(name=ns)
-            except client.exceptions.ApiException as e:
-                if e.status != 404:
-                    raise
-                response = f'Namespace {ns} not found'
-                updated_syncedns.remove(ns)
-                logger.info(f'Namespace {ns} not found while Syncing secret {name}')
-            else:
-                response = v1.create_namespaced_secret(namespace=ns, body=ns_sec_body)
-        logger.debug(response)
-
-    if updated_syncedns != syncedns:
-        # Patch synced_ns field
-        logger.debug(f'Patching clustersecret {name} in namespace {namespace}')
-        body = patch_clustersecret_status(
-            logger=logger,
-            name=name,
-            new_status={'create_fn': {'syncedns': updated_syncedns}},
-            custom_objects_api=custom_objects_api,
-        )
+        sync_secret(logger, ns, body, v1)
 
     # Updating the cache
     csecs_cache.set_cluster_secret(BaseClusterSecret(
         uid=uid,
         name=name,
-        namespace=namespace or "",
         body=body,
-        synced_namespace=updated_syncedns,
+        synced_namespace=syncedns,
     ))
 
 
@@ -190,7 +148,6 @@ async def create_fn(
     logger: logging.Logger,
     uid: str,
     name: str,
-    namespace: str,
     body: Dict[str, Any],
     **_
 ):
@@ -211,7 +168,6 @@ async def create_fn(
     csecs_cache.set_cluster_secret(BaseClusterSecret(
         uid=uid,
         name=name,
-        namespace=namespace or "",
         body=body,
         synced_namespace=matchedns,
     ))
@@ -283,7 +239,6 @@ async def startup_fn(logger: logging.Logger, **_):
             BaseClusterSecret(
                 uid=metadata.get('uid'),
                 name=metadata.get('name'),
-                namespace=metadata.get('namespace', ''),
                 body=item,
                 synced_namespace=item.get('status', {}).get('create_fn', {}).get('syncedns', []),
             )
