@@ -140,6 +140,14 @@ def on_field_data(
         logger.info(f'Re Syncing secret {name} in ns {ns}')
         sync_secret(logger, ns, body, v1)
 
+    # Updating the cache
+    csecs_cache.set_cluster_secret(BaseClusterSecret(
+        uid=uid,
+        name=name,
+        body=body,
+        synced_namespace=syncedns,
+    ))
+
 
 @kopf.on.resume('clustersecret.io', 'v1', 'clustersecrets')
 @kopf.on.create('clustersecret.io', 'v1', 'clustersecrets')
