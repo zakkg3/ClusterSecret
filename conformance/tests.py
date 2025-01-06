@@ -181,7 +181,6 @@ class ClusterSecretCases(unittest.TestCase):
 
         self.cluster_secret_manager.delete_cluster_secret(
             name=name,
-            namespace=USER_NAMESPACES[0],
         )
 
         # We expect the secret to be in NO namespaces
@@ -212,7 +211,6 @@ class ClusterSecretCases(unittest.TestCase):
             name=cluster_secret_name,
             secret_key_ref={
                 'name': secret_name,
-                'namespace': USER_NAMESPACES[0],
             },
         )
 
@@ -245,7 +243,6 @@ class ClusterSecretCases(unittest.TestCase):
             name=cluster_secret_name,
             secret_key_ref={
                 'name': secret_name,
-                'namespace': USER_NAMESPACES[0],
                 'keys': ['username', 'password']
             },
         )
