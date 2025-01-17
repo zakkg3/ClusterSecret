@@ -97,7 +97,7 @@ def on_match_fields(
     ))
 
     # Patch synced_ns field
-    logger.debug(f'Patching clustersecret {name} in namespace {namespace}')
+    logger.debug(f'Patching clustersecret {name}')
     patch_clustersecret_status(
         logger=logger,
         name=name,
@@ -178,7 +178,6 @@ async def create_fn(
 async def namespace_watcher(logger: logging.Logger, meta: kopf.Meta, **_):
     """Watch for namespace events
     """
-    logger.setLevel(logging.DEBUG)
     ns = meta.name
     logger.debug(f'Namespace event: {ns} re-syncing')
     for cluster_secret in csecs_cache.all_cluster_secret():
