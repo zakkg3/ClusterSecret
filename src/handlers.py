@@ -55,7 +55,6 @@ def on_field_match_namespace(
     old: Optional[List[str]],
     new: List[str],
     name: str,
-    namespace: str,
     body,
     uid: str,
     logger: logging.Logger,
@@ -91,13 +90,12 @@ def on_field_match_namespace(
     csecs_cache.set_cluster_secret(BaseClusterSecret(
         uid=uid,
         name=name,
-        namespace=namespace,
         body=body,
         synced_namespace=updated_matched,
     ))
 
     # Patch synced_ns field
-    logger.debug(f'Patching clustersecret {name} in namespace {namespace}')
+    logger.debug(f'Patching clustersecret {name}')
     patch_clustersecret_status(
         logger=logger,
         name=name,
@@ -113,7 +111,6 @@ def on_field_data(
     body: Dict[str, Any],
     meta: kopf.Meta,
     name: str,
-    namespace: Optional[str],
     uid: str,
     logger: logging.Logger,
     **_,
@@ -166,7 +163,7 @@ def on_field_data(
 
     if updated_syncedns != syncedns:
         # Patch synced_ns field
-        logger.debug(f'Patching clustersecret {name} in namespace {namespace}')
+        logger.debug(f'Patching clustersecret {name}')
         body = patch_clustersecret_status(
             logger=logger,
             name=name,
@@ -178,7 +175,6 @@ def on_field_data(
     csecs_cache.set_cluster_secret(BaseClusterSecret(
         uid=uid,
         name=name,
-        namespace=namespace or "",
         body=body,
         synced_namespace=updated_syncedns,
     ))
@@ -190,7 +186,6 @@ async def create_fn(
     logger: logging.Logger,
     uid: str,
     name: str,
-    namespace: str,
     body: Dict[str, Any],
     **_
 ):
@@ -211,7 +206,6 @@ async def create_fn(
     csecs_cache.set_cluster_secret(BaseClusterSecret(
         uid=uid,
         name=name,
-        namespace=namespace or "",
         body=body,
         synced_namespace=matchedns,
     ))
@@ -283,7 +277,6 @@ async def startup_fn(logger: logging.Logger, **_):
             BaseClusterSecret(
                 uid=metadata.get('uid'),
                 name=metadata.get('name'),
-                namespace=metadata.get('namespace', ''),
                 body=item,
                 synced_namespace=item.get('status', {}).get('create_fn', {}).get('syncedns', []),
             )
