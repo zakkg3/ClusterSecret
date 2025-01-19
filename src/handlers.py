@@ -6,8 +6,7 @@ import kopf
 from kubernetes import client, config
 
 from cache import Cache, MemoryCache
-from kubernetes_utils import delete_secret, get_ns_list, sync_secret, patch_clustersecret_status, \
-    create_secret_metadata, secret_exists, get_custom_objects_by_kind
+from kubernetes_utils import delete_secret, get_ns_list, sync_secret, patch_clustersecret_status, get_custom_objects_by_kind
 from models import BaseClusterSecret
 
 # In-memory dictionary for all ClusterSecrets in the Cluster. UID -> ClusterSecret Body
@@ -110,7 +109,6 @@ def on_field_data(
     old: Dict[str, str],
     new: Dict[str, str],
     body: Dict[str, Any],
-    meta: kopf.Meta,
     name: str,
     uid: str,
     logger: logging.Logger,
@@ -125,60 +123,20 @@ def on_field_data(
     logger.debug(f'Updating Object body == {body}')
     syncedns = body.get('status', {}).get('create_fn', {}).get('syncedns', [])
 
-    secret_type = body.get('type', 'Opaque')
-
     cached_cluster_secret = csecs_cache.get_cluster_secret(uid)
     if cached_cluster_secret is None:
         logger.error('Received an event for an unknown ClusterSecret.')
 
-    updated_syncedns = syncedns.copy()
     for ns in syncedns:
         logger.info(f'Re Syncing secret {name} in ns {ns}')
-        ns_sec_body = client.V1Secret(
-            api_version='v1',
-            data={str(key): str(value) for key, value in new.items()},
-            kind='Secret',
-            metadata=create_secret_metadata(
-                name=name,
-                namespace=ns,
-                annotations={str(key): str(value) for key, value in meta.annotations.items()},
-                labels={str(key): str(value) for key, value in meta.labels.items()},
-            ),
-            type=secret_type,
-        )
-        logger.debug(f'body: {ns_sec_body}')
-        # Ensuring the secret still exist.
-        if secret_exists(logger=logger, name=name, namespace=ns, v1=v1):
-            response = v1.replace_namespaced_secret(name=name, namespace=ns, body=ns_sec_body)
-        else:
-            try:
-                v1.read_namespace(name=ns)
-            except client.exceptions.ApiException as e:
-                if e.status != 404:
-                    raise
-                response = f'Namespace {ns} not found'
-                updated_syncedns.remove(ns)
-                logger.info(f'Namespace {ns} not found while Syncing secret {name}')
-            else:
-                response = v1.create_namespaced_secret(namespace=ns, body=ns_sec_body)
-        logger.debug(response)
-
-    if updated_syncedns != syncedns:
-        # Patch synced_ns field
-        logger.debug(f'Patching clustersecret {name}')
-        body = patch_clustersecret_status(
-            logger=logger,
-            name=name,
-            new_status={'create_fn': {'syncedns': updated_syncedns}},
-            custom_objects_api=custom_objects_api,
-        )
+        sync_secret(logger, ns, body, v1)
 
     # Updating the cache
     csecs_cache.set_cluster_secret(BaseClusterSecret(
         uid=uid,
         name=name,
         body=body,
-        synced_namespace=updated_syncedns,
+        synced_namespace=syncedns,
     ))
 
 
