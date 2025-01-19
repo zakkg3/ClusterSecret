@@ -50,8 +50,9 @@ def on_delete(
     logger.debug(f'csec {uid} deleted from memory ok')
 
 
+@kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='avoidNamespaces')
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='matchNamespace')
-def on_field_match_namespace(
+def on_fields_avoid_or_match_namespace(
     old: Optional[List[str]],
     new: List[str],
     name: str,
@@ -60,12 +61,11 @@ def on_field_match_namespace(
     logger: logging.Logger,
     **_,
 ):
-    logger.debug(f'Namespaces changed: {old} -> {new}')
-
     if old is None:
         logger.debug('This is a new object: Ignoring.')
         return
 
+    logger.debug(f'Avoid or match namespaces changed: {old} -> {new}')
     logger.debug(f'Updating Object body == {body}')
 
     syncedns = body.get('status', {}).get('create_fn', {}).get('syncedns', [])
@@ -80,7 +80,7 @@ def on_field_match_namespace(
         sync_secret(logger, secret_namespace, body, v1)
 
     for secret_namespace in to_remove:
-        delete_secret(logger, secret_namespace, name, v1=v1)
+        delete_secret(logger, secret_namespace, name, v1)
 
     cached_cluster_secret = csecs_cache.get_cluster_secret(uid)
     if cached_cluster_secret is None:
