@@ -170,41 +170,61 @@ async def create_fn(
 
 
 @kopf.on.create('', 'v1', 'namespaces')
-async def namespace_watcher(logger: logging.Logger, meta: kopf.Meta, **_):
+@kopf.on.delete('', 'v1', 'namespaces')
+async def namespace_watcher(logger: logging.Logger, reason: kopf.Reason, meta: kopf.Meta, **_):
     """Watch for namespace events
     """
-    new_ns = meta.name
-    logger.debug(f'New namespace created: {new_ns} re-syncing')
-    ns_new_list = []
-    for cluster_secret in csecs_cache.all_cluster_secret():
-        obj_body = cluster_secret.body
-        name = cluster_secret.name
+    if reason not in ["create", "delete"]:
+        logger.error(f'Function "namespace_watcher" was called with incorrect reason: {reason}')
+        return
+    
+    ns_name = meta.name
+    logger.info(f'Namespace {"created" if reason == "create" else "deleted"}: {ns_name}. Re-syncing')
+    
+    ns_list_new = []
+    for cached_cluster_secret in csecs_cache.all_cluster_secret():
+        body = cached_cluster_secret.body
+        name = cached_cluster_secret.name
+        ns_list_synced = cached_cluster_secret.synced_namespace
+        ns_list_new = get_ns_list(logger, body, v1)
+        ns_list_changed = False
 
-        matcheddns = cluster_secret.synced_namespace
-
-        logger.debug(f'Old matched namespace: {matcheddns} - name: {name}')
-        ns_new_list = get_ns_list(logger, obj_body, v1)
-        logger.debug(f'new matched list: {ns_new_list}')
-        if new_ns in ns_new_list:
-            logger.debug(f'Cloning secret {name} into the new namespace {new_ns}')
+        logger.debug(f'ClusterSecret: {name}. Old matched namespaces: {ns_list_synced}')
+        logger.debug(f'ClusterSecret: {name}. New matched namespaces: {ns_list_new}')
+        
+        if reason == "create" and ns_name in ns_list_new:
+            logger.info(f'Cloning secret {name} into the new namespace: {ns_name}')
             sync_secret(
                 logger=logger,
-                namespace=new_ns,
-                body=obj_body,
+                namespace=ns_name,
+                body=body,
                 v1=v1,
             )
+            ns_list_changed = True
+        
+        if reason == "delete" and ns_name in ns_list_synced:
+            logger.info(f'Secret {name} removed from deleted namespace: {ns_name}')
+            # Ensure that deleted namespace will not come in new list - on moment when this event handled by kopf the namespace in kubernetes can still exists
+            if ns_name in ns_list_new:
+                ns_list_new.remove(ns_name)
+            ns_list_changed = True
 
-            # if there is a new matching ns, refresh cache
-            cluster_secret.synced_namespace = ns_new_list
-            csecs_cache.set_cluster_secret(cluster_secret)
+        # Update ClusterSecret only if there are changes in list of his namespaces
+        if ns_list_changed:
+            # Update in-memory cache
+            cached_cluster_secret.synced_namespace = ns_list_new
+            csecs_cache.set_cluster_secret(cached_cluster_secret)
 
-        # update ns_new_list on the object so then we also delete from there
-        patch_clustersecret_status(
-            logger=logger,
-            name=cluster_secret.name,
-            new_status={'create_fn': {'syncedns': ns_new_list}},
-            custom_objects_api=custom_objects_api,
-        )
+            # Update the list of synced namespaces in kubernetes object
+            logger.debug(f'Patching ClusterSecret: {name}')
+            patch_clustersecret_status(
+                logger=logger,
+                name=name,
+                new_status={'create_fn': {'syncedns': ns_list_new}},
+                custom_objects_api=custom_objects_api,
+            )
+        else:
+            logger.debug(f'There are no changes in the list of namespaces for ClusterSecret: {name}')
 
 
 @kopf.on.startup()
