@@ -160,8 +160,8 @@ def secret_belongs(
         csec_body: Dict[str, Any],
         ns_meta: Dict[str, Any],
 ):
-    ns_name = ns_meta.name
-    ns_labels = ns_meta.labels
+    ns_name = ns_meta.get('name', None)
+    ns_labels = ns_meta.get('labels', {})
 
     # Get avoidNamespaces or default to empty list
     avoid_namespaces = csec_body.get('avoidNamespaces', [])

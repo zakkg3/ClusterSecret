@@ -173,12 +173,22 @@ async def create_fn(
     return {'syncedns': matchedns}
 
 
-@kopf.on.create('', 'v1', 'namespaces')
-@kopf.on.field('', 'v1', 'namespaces', field='metadata.labels')
-async def namespace_watcher(logger: logging.Logger, meta: kopf.Meta, **_):
+@kopf.on.event('', 'v1', 'namespaces')
+async def namespace_watcher(
+    logger: logging.Logger,
+    event,
+    **_
+):
     """Watch for namespace events
     """
-    ns = meta.name
+    event_type = event.get('type', None)
+
+    # Ignore events without type (sent on operator startup)
+    if event_type == None: return
+
+    meta = event.get('object',{}).get('metadata',{})
+    ns = meta.get('name', None)
+    is_delete = event_type == 'DELETED'
     logger.debug(f'Namespace event: {ns} re-syncing')
     for cluster_secret in csecs_cache.all_cluster_secret():
         obj_body = cluster_secret.body
@@ -187,10 +197,10 @@ async def namespace_watcher(logger: logging.Logger, meta: kopf.Meta, **_):
         matchedns = cluster_secret.synced_namespace
 
         logger.debug(f'Old matched namespace: {matchedns} - name: {name}')
-        is_match = secret_belongs(logger, obj_body, meta)
+        is_match = False if is_delete else secret_belongs(logger, obj_body, meta)
         if is_match and not ns in matchedns:
-            matchedns.append(ns)
             logger.debug(f'Cloning secret {name} into namespace {ns}')
+            matchedns.append(ns)
             sync_secret(
                 logger=logger,
                 namespace=ns,
@@ -200,19 +210,22 @@ async def namespace_watcher(logger: logging.Logger, meta: kopf.Meta, **_):
 
         elif not is_match and ns in matchedns:
             matchedns.remove(ns)
-            delete_secret(logger, ns, name, v1)
+            if not is_delete:
+                delete_secret(logger, ns, name, v1)
 
-        # Update cache and clustersecret status if matchedns changed
-        if matchedns != cluster_secret.synced_namespace:
-            cluster_secret.synced_namespace = matchedns
-            csecs_cache.set_cluster_secret(cluster_secret)
+        else:
+            # Return without updating cache when nothing changed
+            return
 
-            patch_clustersecret_status(
-                logger=logger,
-                name=cluster_secret.name,
-                new_status={'create_fn': {'syncedns': matchedns}},
-                custom_objects_api=custom_objects_api,
-            )
+        cluster_secret.synced_namespace = matchedns
+        csecs_cache.set_cluster_secret(cluster_secret)
+
+        patch_clustersecret_status(
+            logger=logger,
+            name=cluster_secret.name,
+            new_status={'create_fn': {'syncedns': matchedns}},
+            custom_objects_api=custom_objects_api,
+        )
 
 
 @kopf.on.startup()
