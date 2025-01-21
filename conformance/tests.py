@@ -162,6 +162,48 @@ class ClusterSecretCases(unittest.TestCase):
             f'secret {name} should be in all user namespaces'
         )
 
+    def test_patch_cluster_secret_avoid_namespaces(self):
+        name = "dynamic-cluster-secret-avoid-namespaces"
+        username_data = "MTIzNDU2Cg=="
+
+        # Create a secret in all user namespaces
+        self.cluster_secret_manager.create_cluster_secret(
+            name=name,
+            data={"username": username_data},
+            match_namespace=USER_NAMESPACES
+        )
+
+        # We expect the secret to be in all user namespaces
+        self.assertTrue(
+            self.cluster_secret_manager.validate_namespace_secrets(
+                name=name,
+                data={"username": username_data},
+                namespaces=USER_NAMESPACES,
+            )
+        )
+
+        # Update the cluster avoid_namespaces to exclude second namespace
+        self.cluster_secret_manager.update_data_cluster_secret(
+            name=name,
+            data={"username": username_data},
+            match_namespace=USER_NAMESPACES,
+            avoid_namespaces=[
+                USER_NAMESPACES[1]
+            ],
+        )
+
+        self.assertTrue(
+            self.cluster_secret_manager.validate_namespace_secrets(
+                name=name,
+                data={"username": username_data},
+                namespaces=[
+                    USER_NAMESPACES[1]
+                ],
+                check_missing=True,
+            ),
+            f'secret {name} should be deleted from second namespace'
+        )
+
     def test_simple_cluster_secret_deleted(self):
         name = "simple-cluster-secret-deleted"
         username_data = "MTIzNDU2Cg=="
