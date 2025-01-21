@@ -188,7 +188,7 @@ class ClusterSecretCases(unittest.TestCase):
             self.cluster_secret_manager.validate_namespace_secrets(
                 name=name,
                 data={"username": username_data},
-                namespaces=[],
+                check_missing=True,
             ),
             f'secret {name} should be deleted from all namespaces.'
         )

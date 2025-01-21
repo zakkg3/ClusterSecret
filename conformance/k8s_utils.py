@@ -65,6 +65,7 @@ class ClusterSecretManager:
         # immutable after
         self.retry_attempts = 3
         self.retry_delay = 5
+        self.before_validate_delay = 3
 
     def create_secret(
             self,
@@ -178,6 +179,7 @@ class ClusterSecretManager:
             namespaces: Optional[List[str]] = None,
             labels: Optional[Dict[str, str]] = None,
             annotations: Optional[Dict[str, str]] = None,
+            check_missing: Optional[bool] = False,
     ) -> bool:
         """
 
@@ -189,36 +191,49 @@ class ClusterSecretManager:
             If None, it means the secret should be present in ALL namespaces
         annotations: Optional[Dict[str, str]]
         labels: Optional[Dict[str, str]]
+        check_missing: Optional[bool]
+            If True, it checks if the secret is missing in the namespaces
 
         Returns
         -------
 
         """
-        all_namespaces = [item.metadata.name for item in self.api_instance.list_namespace().items]
-
         def validate() -> Optional[str]:
-            for namespace in all_namespaces:
+            if namespaces is None or len(namespaces) == 0:
+                # It parses all kubernetes namespaces and check each of them with 'validate_specific_secret' function. If none of them return an answer, it returns None.
+                all_namespaces = (ns.metadata.name for ns in self.api_instance.list_namespace().items)
+                return next((answer for namespace in all_namespaces if (answer := validate_specific_secret(namespace))), None)
+            elif len(namespaces) > 1:
+                # Do the same as previous block but with incoming (to function from outside) namespaces list.
+                return next((answer for namespace in namespaces if (answer := validate_specific_secret(namespace))), None)
+            else:
+                # If incoming namespace only one, check only that specific namespace.
+                return validate_specific_secret(namespaces[0])
 
-                secret = self.get_kubernetes_secret(name=name, namespace=namespace)
+        def validate_specific_secret(namespace) -> Optional[str]:
+            secret = self.get_kubernetes_secret(name, namespace)
 
-                if namespaces is not None and namespace not in namespaces:
-                    if secret is None:
-                        continue
-                    return f''
+            if check_missing and secret is not None:
+                return f'secret {name} is present in namespace {namespace}.'
+            elif check_missing:
+                return None
 
-                if secret is None:
-                    return f'secret {name} is none in namespace {namespace}.'
+            if secret is None:
+                return f'secret {name} is none in namespace {namespace}.'
 
-                if secret.data != data:
-                    return f'secret {name} data mismatch in namespace {namespace}.'
+            if secret.data != data:
+                return f'secret {name} data mismatch in namespace {namespace}.'
 
-                if annotations is not None and not is_subset(secret.metadata.annotations, annotations):
-                    return f'secret {name} annotations mismatch in namespace {namespace}.'
+            if annotations is not None and not is_subset(secret.metadata.annotations, annotations):
+                return f'secret {name} annotations mismatch in namespace {namespace}.'
 
-                if labels is not None and not is_subset(secret.metadata.labels, labels):
-                    return f'secret {name} labels mismatch in namespace {namespace}.'
-
+            if labels is not None and not is_subset(secret.metadata.labels, labels):
+                return f'secret {name} labels mismatch in namespace {namespace}.'
+            
             return None
+
+        # This is to wait before previous kubernetes operations are completed.
+        sleep(self.before_validate_delay)
 
         return self.retry(validate)
 
