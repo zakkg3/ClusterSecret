@@ -59,9 +59,10 @@ def on_fields_avoid_or_match_namespace(
     body,
     uid: str,
     logger: logging.Logger,
+    reason: kopf.Reason,
     **_,
 ):
-    if old is None:
+    if reason == "create":
         logger.debug('This is a new object: Ignoring.')
         return
 
@@ -113,13 +114,14 @@ def on_field_data(
     name: str,
     uid: str,
     logger: logging.Logger,
+    reason: kopf.Reason,
     **_,
 ):
-    logger.debug(f'Data changed: {old} -> {new}')
-    if old is None:
+    if reason == "create":
         logger.debug('This is a new object: Ignoring')
         return
 
+    logger.debug(f'Data changed: {old} -> {new}')
     logger.debug(f'Updating Object body == {body}')
     syncedns = body.get('status', {}).get('create_fn', {}).get('syncedns', [])
 
@@ -196,11 +198,6 @@ async def create_fn(
     logger.info(f'Syncing on Namespaces: {matchedns}')
     for ns in matchedns:
         sync_secret(logger, ns, body, v1)
-
-    # store status in memory
-    cached_cluster_secret = csecs_cache.get_cluster_secret(uid)
-    if cached_cluster_secret is None:
-        logger.error('Received an event for an unknown ClusterSecret.')
 
     # Updating the cache
     csecs_cache.set_cluster_secret(BaseClusterSecret(
