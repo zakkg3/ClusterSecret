@@ -46,6 +46,7 @@ def on_delete(
 
 
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='matchNamespace')
+@kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='avoidNamespaces')
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='matchLabels')
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='matchedSetsJoin')
 def on_match_fields(
