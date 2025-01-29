@@ -1,21 +1,22 @@
 import logging
 from datetime import datetime
 from typing import Optional, Dict, Any, List, Mapping, Tuple, Iterator
+from cache import Cache
 import re
 
 import kopf
-from kubernetes.client import CoreV1Api, CustomObjectsApi, exceptions, V1ObjectMeta, rest, V1Secret
+from kubernetes.client import CoreV1Api, CustomObjectsApi, exceptions, V1ObjectMeta, V1OwnerReference, rest, V1Secret
 
+from models import BaseClusterSecret
 from os_utils import get_blocked_labels, get_replace_existing, get_version
-from consts import CREATE_BY_ANNOTATION, LAST_SYNC_ANNOTATION, VERSION_ANNOTATION, BLOCKED_ANNOTATIONS, \
-    CREATE_BY_AUTHOR, CLUSTER_SECRET_LABEL
+from consts import VERSION_ANNOTATION, BLOCKED_ANNOTATIONS, CLUSTER_SECRET_LABEL
 
 
 def patch_clustersecret_status(
-    logger: logging.Logger,
-    name: str,
-    new_status,
-    custom_objects_api: CustomObjectsApi,
+        logger: logging.Logger,
+        name: str,
+        new_status,
+        custom_objects_api: CustomObjectsApi,
 ):
     """Patch the status of a given clustersecret object
     """
@@ -52,56 +53,50 @@ def get_ns_list(
 ) -> List[str]:
     """Returns a list of namespaces where the secret should be matched
     """
-    # Get matchNamespace or default to all
-    match_namespace = body.get('matchNamespace', ['.*'])
+    # Get matchLabels or default to empty dict
+    match_labels = body.get('matchLabels', {})
 
-    # Get avoidNamespaces or default to None
-    avoid_namespaces = body.get('avoidNamespaces', None)
+    # Get matchedSetsJoin or default to "union"
+    matched_sets_join = body.get('matchedSetsJoin', 'union')
 
-    # Collect all namespaces names
-    nss = [ns.metadata.name for ns in v1.list_namespace().items]
+    # Get matchNamespace or set default based on match_labels and join strategy
+    match_namespace = body.get('matchNamespace', [] if (match_labels and matched_sets_join == 'union') else ['.*'])
+
+    # Get avoidNamespaces or default to empty list
+    avoid_namespaces = body.get('avoidNamespaces', [])
+
+    # Collect all namespace names and labels
+    ns_with_labels = {ns.metadata.name:ns.metadata.labels for ns in v1.list_namespace().items}
+    nss = ns_with_labels.keys()
     matched_ns = []
     avoided_ns = []
 
     # Iterate over all matchNamespace
     for match_ns in match_namespace:
         matched_ns.extend([ns for ns in nss if re.match(match_ns, ns)])
-        logger.debug(f'Matched namespaces: {", ".join(matched_ns)} match pattern: {match_ns}')
+        logger.debug(f'Matched namespaces: [{", ".join(matched_ns)}] match pattern: {match_ns}')
 
-    # If avoidNamespaces is None simply return our matched list
-    if not avoid_namespaces:
-        return matched_ns
+    # Iterate over all matchLabels
+    for label_key,label_value in match_labels.items():
+      label_ns = [ns for ns,labels in ns_with_labels.items() if
+                   label_key in labels and
+                   labels[label_key] == label_value]
+      logger.debug(f'Matched namespaces: [{", ".join(label_ns)}] match label: {label_key}: {label_value}')
 
-    # Iterate over all avoidNamespaces
+      if matched_sets_join == 'intersection':
+        matched_ns = list(set(matched_ns).intersection(set(label_ns)))
+        logger.debug(f'Intersection: [{", ".join(matched_ns)}]')
+        if matched_ns == []:
+          return []
+      else:
+        matched_ns.extend(label_ns)
+        logger.debug(f'Union: [{", ".join(matched_ns)}]')
+    
     for avoid_ns in avoid_namespaces:
         avoided_ns.extend([ns for ns in nss if re.match(avoid_ns, ns)])
         logger.debug(f'Skipping namespaces: {", ".join(avoided_ns)} avoid pattern: {avoid_ns}')
 
     return list(set(matched_ns) - set(avoided_ns))
-
-
-def read_data_secret(
-        logger: logging.Logger,
-        name: str,
-        namespace: str,
-        v1: CoreV1Api,
-) -> Dict[str, str]:
-    """Gets the data from the 'name' secret in namespace
-    """
-    data = {}
-    logger.debug(f'Reading {name} from ns {namespace}')
-    try:
-        secret = v1.read_namespaced_secret(name, namespace)
-
-        logger.debug(f'Obtained secret {secret}')
-        data = secret.data
-    except exceptions.ApiException as e:
-        logger.error('Error reading secret')
-        logger.debug(f'error: {e}')
-        if e == '404':
-            logger.error(f'Secret {name} in ns {namespace} not found.')
-        raise kopf.TemporaryError('Error reading secret')
-    return data
 
 
 def delete_secret(
@@ -137,20 +132,82 @@ def secret_exists(
     ) is not None
 
 
-def secret_metadata(
+def secret_belongs(
         logger: logging.Logger,
-        name: str,
-        namespace: str,
+        csec_body: Dict[str, Any],
+        ns_name: str,
+        ns_labels: Dict[str, str],
+):
+    # Get avoidNamespaces or default to empty list
+    avoid_namespaces = csec_body.get('avoidNamespaces', [])
+
+    for avoid_ns in avoid_namespaces:
+        if re.match(avoid_ns, ns_name):
+            return False
+
+    # Get matchLabels or default to empty dict
+    match_labels = csec_body.get('matchLabels', {})
+
+    # Get matchedSetsJoin or default to "union"
+    matched_sets_join = csec_body.get('matchedSetsJoin', 'union')
+
+    # Get matchNamespace or set default based on match_labels and join strategy
+    match_namespace = csec_body.get('matchNamespace', [] if (match_labels and matched_sets_join == 'union') else ['.*'])
+
+    is_match = False
+    for match_ns in match_namespace:
+        if re.match(match_ns, ns_name):
+            is_match = True
+            break
+
+    if matched_sets_join == 'intersection' and is_match:
+        for label_key,label_value in match_labels.items():
+            if not (label_key in ns_labels and ns_labels[label_key] == label_value):
+                is_match = False
+                break
+    elif matched_sets_join == 'union' and not is_match:
+        for label_key,label_value in match_labels.items():
+            if label_key in ns_labels and ns_labels[label_key] == label_value:
+                is_match = True
+                break
+
+    return is_match
+
+
+def sync_clustersecret(
+        logger: logging.Logger,
+        body: Dict[str, Any],
+        csecs_cache: Cache,
         v1: CoreV1Api,
-) -> Optional[V1ObjectMeta]:
-    try:
-        secret = v1.read_namespaced_secret(name, namespace)
-        return secret.metadata
-    except exceptions.ApiException as e:
-        if e.status == 404:
-            return None
-        logger.warning(f'Cannot read the secret {e}.')
-        raise kopf.TemporaryError(f'Error reading secret {e}')
+        custom_objects_api: CustomObjectsApi,
+):
+    meta = body.get('metadata',{})
+    name = meta.get('name')
+
+    # get all ns matching.
+    matchedns = get_ns_list(logger, body, v1)
+
+    # sync in all matched NS
+    logger.info(f'Syncing on Namespaces: {matchedns}')
+    for ns in matchedns:
+        sync_secret(logger, ns, body, v1)
+
+    # Updating the cache
+    csecs_cache.set_cluster_secret(BaseClusterSecret(
+        uid=meta.get('uid'),
+        name=name,
+        body=body,
+        synced_namespace=matchedns,
+    ))
+
+    # Patch synced_ns field
+    logger.debug(f'Patching clustersecret {name}')
+    patch_clustersecret_status(
+        logger=logger,
+        name=name,
+        new_status={'syncedns': matchedns},
+        custom_objects_api=custom_objects_api,
+    )
 
 
 def sync_secret(
@@ -161,84 +218,73 @@ def sync_secret(
 ):
     """Creates a given secret on a given namespace
     """
-    if 'metadata' not in body:
-        raise kopf.TemporaryError('Metadata is required.')
-
-    if 'name' not in body['metadata']:
-        raise kopf.TemporaryError('Property name is missing in metadata.')
-
     cs_metadata: Dict[str, Any] = body.get('metadata')
     sec_name = cs_metadata.get('name')
     annotations = cs_metadata.get('annotations', None)
     labels = cs_metadata.get('labels', None)
 
-    if 'data' not in body:
-        raise kopf.TemporaryError('Property data is missing.')
-
-    data: Dict[str, Any] = body['data']
-
-    if 'valueFrom' in data:
-        if len(data.keys()) > 1:
-            logger.error('Data keys with ValueFrom error, enable debug for more details')
-            logger.debug(f'keys: {data.keys()}  len {len(data.keys())}')
-            raise kopf.TemporaryError('ValueFrom can not coexist with other keys in the data')
-
-        secret_key_ref: Dict[str, Any] = data.get('valueFrom', {}).get('secretKeyRef', {})
-        ns_from: str = secret_key_ref.get('namespace', None)
-        name_from: str = secret_key_ref.get('name', None)
-        keys: Optional[List[str]] = secret_key_ref.get('keys', None)
-
-        if ns_from is None or name_from is None:
-            logger.error('ERROR reading data from remote secret, enable debug for more details')
-            logger.debug(f'Deta details: {data}')
-            raise kopf.TemporaryError('Can not get Values from external secret')
+    if 'data' in body:
+        data = body.get('data')
+    elif 'fromSecret' in body:
+        secret_key_ref: Dict[str, Any] = body.get('fromSecret', {})
+        from_ns: str = secret_key_ref.get('namespace')
+        from_name: str = secret_key_ref.get('name')
+        keys: Optional[List[str]] = secret_key_ref.get('keys')
 
         # Filter the keys in data based on the keys list provided
-        raw_data = read_data_secret(logger, name_from, ns_from, v1)
+        try:
+            from_secret = v1.read_namespaced_secret(from_name, from_ns)
+            logger.debug(f'Obtained secret {from_secret}')
+            raw_data = from_secret.data
+        except exceptions.ApiException as e:
+            logger.error(f'Cannot read source secret {from_name} in namespace {from_ns}. enable debug for details')
+            logger.debug(f'Kube exception {e}')
+            return
         if keys is not None:
             data = {key: value for key, value in raw_data.items() if key in keys}
         else:
             data = raw_data
 
-    logger.debug(f'Going to create with data: {data}')
-    secret_type = body.get('type', 'Opaque')
+    else:
+        return
 
-    body = V1Secret()
-    body.metadata = create_secret_metadata(
+    logger.debug(f'Going to create with data: {data}')
+    sec_type = body.get('type', 'Opaque')
+
+    sec_body = V1Secret()
+    sec_body.metadata = create_secret_metadata(
         name=sec_name,
         namespace=namespace,
+        csec_body=body,
         annotations=annotations,
         labels=labels,
     )
-    body.type = secret_type
-    body.data = data
-    logger.info(f'cloning secret in namespace {namespace}')
-    logger.debug(f'V1Secret= {body}')
+    sec_body.type = sec_type
+    sec_body.data = data
+    logger.info(f'syncing secret {sec_name} in namespace {namespace}')
+    logger.debug(f'V1Secret= {sec_body}')
 
     try:
-        # Get metadata from secrets (if exist)
-        metadata = secret_metadata(logger, name=sec_name, namespace=namespace, v1=v1)
+        # Get secret
+        try:
+            secret = v1.read_namespaced_secret(sec_name, namespace)
+        except exceptions.ApiException as e:
+            if e.status == 404:
+                secret = None
+            else:
+                logger.error(f'Cannot read secret {sec_name} in namespace {namespace}. enable debug for details')
+                logger.debug(f'Kube exception {e}')
+                return
 
         # If nothing returned, the secret does not exist, creating it then
-        if metadata is None:
+        if secret is None:
             logger.info('Using create_namespaced_secret')
-            logger.debug(f'response is {v1.create_namespaced_secret(namespace, body)}')
+            logger.debug(f'response is {v1.create_namespaced_secret(namespace, sec_body)}')
             return
 
-        if metadata.annotations is None:
-            logger.info(
-                f'secret `{sec_name}` exist but it does not have annotations, so is not managed by ClusterSecret',
-            )
-
-            # If we should not overwrite existing secrets
-            if not get_replace_existing():
-                logger.info(
-                    f'secret `{sec_name}` will not be replaced. '
-                    'You can enforce this by setting env REPLACE_EXISTING to true.',
-                )
-                return
-        elif metadata.annotations.get(CREATE_BY_ANNOTATION) is None:
-            logger.error(
+        metadata = secret.metadata
+        if not metadata.owner_references or metadata.owner_references[0].kind != 'ClusterSecret':
+            logger.warning(
                 f"secret `{sec_name}` already exist in namespace '{namespace}' and is not managed by ClusterSecret",
             )
 
@@ -249,12 +295,17 @@ def sync_secret(
                 )
                 return
 
-        logger.info(f'Replacing secret {sec_name}')
-        v1.replace_namespaced_secret(
-            name=sec_name,
-            namespace=namespace,
-            body=body,
-        )
+        if (secret.data != sec_body.data or
+            not secret.metadata.labels.items() >= sec_body.metadata.labels.items() or
+            not secret.metadata.annotations.items() >= sec_body.metadata.annotations.items() or
+            secret.metadata.owner_references != sec_body.metadata.owner_references
+        ):
+            logger.info(f'Replacing secret {sec_name}')
+            v1.replace_namespaced_secret(
+                name=sec_name,
+                namespace=namespace,
+                body=sec_body,
+            )
     except rest.ApiException as e:
         logger.error('Can not create a secret, it is base64 encoded? enable debug for details')
         logger.debug(f'data: {data}')
@@ -264,6 +315,7 @@ def sync_secret(
 def create_secret_metadata(
         name: str,
         namespace: str,
+        csec_body: Dict[str, Any],
         annotations: Optional[Mapping[str, str]] = None,
         labels: Optional[Mapping[str, str]] = None,
 ) -> V1ObjectMeta:
@@ -275,6 +327,8 @@ def create_secret_metadata(
         The name of the Kubernetes secret.
     namespace: str
         The namespace where the secret will be place.
+    csec_body: Dict[str, Any]
+        The body of the clustersecret
     labels: Optional[Dict[str, str]]
         The secret labels.
     annotations: Optional[Dict[str, str]]
@@ -304,16 +358,25 @@ def create_secret_metadata(
         CLUSTER_SECRET_LABEL: 'true'
     }
     base_annotations = {
-        CREATE_BY_ANNOTATION: CREATE_BY_AUTHOR,
         VERSION_ANNOTATION: get_version(),
-        LAST_SYNC_ANNOTATION: datetime.now().isoformat(),
     }
+
+    # Create directly instead of with kopf.adopt to handle namespace events
+    owner_reference = V1OwnerReference(
+        api_version = csec_body.get('apiVersion', None),
+        block_owner_deletion = True,
+        controller = True,
+        kind = csec_body.get('kind', None),
+        name = csec_body.get('metadata', {}).get('name', None),
+        uid = csec_body.get('metadata', {}).get('uid', None)
+    )
 
     _annotations = filter_dict(BLOCKED_ANNOTATIONS, base_annotations, annotations)
     _labels = filter_dict(get_blocked_labels(), base_labels, labels)
     return V1ObjectMeta(
         name=name,
         namespace=namespace,
+        owner_references=[owner_reference],
         annotations=dict(_annotations),
         labels=dict(_labels),
     )

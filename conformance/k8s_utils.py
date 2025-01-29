@@ -153,8 +153,7 @@ class ClusterSecretManager:
 
     def delete_cluster_secret(
             self,
-            name: str,
-            namespace: str
+            name: str
     ):
         self.custom_objects_api.delete_cluster_custom_object(
             name=name,
