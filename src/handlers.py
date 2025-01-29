@@ -55,10 +55,11 @@ def on_match_fields(
     name: str,
     body,
     uid: str,
+    reason: kopf.Reason,
     logger: logging.Logger,
     **_,
 ):
-    if old is None:
+    if reason == "create":
         logger.debug('This is a new object: Ignoring.')
         return
 
@@ -107,14 +108,15 @@ def on_field_data(
     new: Dict[str, str],
     body: Dict[str, Any],
     uid,
+    reason: kopf.Reason,
     logger: logging.Logger,
     **_,
 ):
-    logger.debug(f'Data changed: {old} -> {new}')
-    if old is None:
+    if reason == "create":
         logger.debug('This is a new object: Ignoring')
         return
 
+    logger.debug(f'Data changed: {old} -> {new}')
     cached_cluster_secret = csecs_cache.get_cluster_secret(uid)
     if cached_cluster_secret is None:
         logger.error('Received an event for an unknown ClusterSecret.')
@@ -253,4 +255,5 @@ async def startup_fn(
     logger.info(f'Found {len(cluster_secrets)} existing cluster secrets.')
 
     for cluster_secret in cluster_secrets:
+        logger.info(f'Syncing cluster secret {cluster_secret.get("metadata").get("name")}.')
         sync_clustersecret(logger, cluster_secret, csecs_cache, v1, custom_objects_api)
