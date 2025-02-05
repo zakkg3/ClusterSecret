@@ -26,7 +26,6 @@ class TestClusterSecretHandler(unittest.TestCase):
         csec = BaseClusterSecret(
             uid="mysecretuid",
             name="mysecret",
-            namespace="",
             body={"metadata": {"name": "mysecret", "uid": "mysecretuid"}, "data": {"key": "oldvalue"}},
             synced_namespace=[],
         )
@@ -42,7 +41,6 @@ class TestClusterSecretHandler(unittest.TestCase):
             body=new_body,
             meta=kopf.Meta({"metadata": {"name": "mysecret"}}),
             name="mysecret",
-            namespace=None,
             uid="mysecretuid",
             logger=self.logger,
         )
@@ -75,7 +73,6 @@ class TestClusterSecretHandler(unittest.TestCase):
         csec = BaseClusterSecret(
             uid="mysecretuid",
             name="mysecret",
-            namespace="",
             body={
                 "metadata": {"name": "mysecret", "uid": "mysecretuid"},
                 "data": {"key": "oldvalue"},
@@ -100,7 +97,6 @@ class TestClusterSecretHandler(unittest.TestCase):
                 body=new_body,
                 meta=kopf.Meta({"metadata": {"name": "mysecret"}}),
                 name="mysecret",
-                namespace=None,
                 uid="mysecretuid",
                 logger=self.logger,
             )
@@ -203,7 +199,6 @@ class TestClusterSecretHandler(unittest.TestCase):
         csec = BaseClusterSecret(
             uid="mysecretuid",
             name="mysecret",
-            namespace="",
             body={
                 "metadata": {"name": "mysecret", "uid": "mysecretuid"},
                 "data": {"key": "oldvalue"},
@@ -229,7 +224,6 @@ class TestClusterSecretHandler(unittest.TestCase):
                 body=new_body,
                 meta=kopf.Meta({"metadata": {"name": "mysecret"}}),
                 name="mysecret",
-                namespace=None,
                 uid="mysecretuid",
                 logger=self.logger,
             )
@@ -265,7 +259,6 @@ class TestClusterSecretHandler(unittest.TestCase):
         body = {
             "metadata": {
                 "name": "mysecret",
-                "namespace": "myclustersecretnamespace",
                 "uid": "mysecretuid"
             },
             "data": {"key": "value"}
@@ -284,15 +277,14 @@ class TestClusterSecretHandler(unittest.TestCase):
                     logger=self.logger,
                     uid="mysecretuid",
                     name="mysecret",
-                    namespace="myclustersecretnamespace",
                     body=body,
                 )
             )
 
-        # ClusterSecret with a correct namespace should be in the cache.
+        # The secrets should be in all namespaces of the cache.
         self.assertEqual(
-            csecs_cache.get_cluster_secret("mysecretuid").namespace,
-            "myclustersecretnamespace",
+            csecs_cache.get_cluster_secret("mysecretuid").synced_namespace,
+            ["default", "myns"],
         )
 
     def test_ns_create(self):
@@ -312,7 +304,6 @@ class TestClusterSecretHandler(unittest.TestCase):
         csec = BaseClusterSecret(
             uid="mysecretuid",
             name="mysecret",
-            namespace="",
             body={"metadata": {"name": "mysecret"}, "data": "mydata"},
             synced_namespace=["default"],
         )
@@ -358,7 +349,6 @@ class TestClusterSecretHandler(unittest.TestCase):
         csec = BaseClusterSecret(
             uid="mysecretuid",
             name="mysecret",
-            namespace="",
             body={"metadata": {"name": "mysecret", "uid": "mysecretuid"}, "data": "mydata"},
             synced_namespace=[],
         )

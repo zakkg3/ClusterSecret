@@ -18,7 +18,6 @@ Here is how it looks like:
 kind: ClusterSecret
 apiVersion: clustersecret.io/v1
 metadata:
-  namespace: clustersecret
   name: default-wildcard-certifiate
 matchNamespace:
   - prefix_ns-*
