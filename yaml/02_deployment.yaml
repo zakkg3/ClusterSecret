@@ -19,7 +19,7 @@ spec:
         # - name: regcred
         containers:
         - name: clustersecret
-          image: quay.io/clustersecret/clustersecret:0.0.11
+          image: quay.io/clustersecret/clustersecret:0.0.14
           livenessProbe:
             httpGet:
               path: /healthz
@@ -27,7 +27,7 @@ spec:
             periodSeconds: 120
           env:
             - name: CLUSTER_SECRET_VERSION
-              value: "v0.0.11"
+              value: "v0.0.14"
             - name: REPLACE_EXISTING
               value: "false"
           # imagePullPolicy: Always
