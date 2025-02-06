@@ -65,10 +65,10 @@ If this is helpful, consider supporting the project :)
 
 ## Requirements
 
-Current version `0.0.11` is tested for Kubernetes >= 1.19 up to 1.27.3
+Current version `0.0.14` is tested for Kubernetes >= 1.19 up to 1.27.3
 For older Kubernetes (<1.19) use the image tag `0.0.6` in your helm values file.
 
-architectures available (0.0.11):
+architectures available (0.0.14):
 
 SHA256 ed12e8f3e630 | linux | 386
 SHA256 91b0285f5398 | linux | amd64
