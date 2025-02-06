@@ -6,7 +6,7 @@ import kopf
 from kubernetes import client, config
 
 from cache import Cache, MemoryCache
-from kubernetes_utils import delete_secret, get_ns_list, sync_secret, sync_clustersecret, patch_clustersecret_status, \
+from kubernetes_utils import delete_secret, get_ns_list, sync_secret, sync_clustersecret, get_child_secret_namespaces, \
     create_secret_metadata, secret_exists, secret_belongs, get_custom_objects_by_kind
 from models import BaseClusterSecret
 
@@ -65,9 +65,8 @@ def on_match_fields(
 
     logger.debug(f'Updating Object body == {body}')
 
-    syncedns = body.get('status', {}).get('syncedns', [])
-
     updated_matched = get_ns_list(logger, body, v1)
+    syncedns = get_child_secret_namespaces(logger, name, v1)
     to_add = set(updated_matched).difference(set(syncedns))
     to_remove = set(syncedns).difference(set(updated_matched))
 
@@ -88,17 +87,7 @@ def on_match_fields(
         uid=uid,
         name=name,
         body=body,
-        synced_namespace=updated_matched,
     ))
-
-    # Patch synced_ns field
-    logger.debug(f'Patching clustersecret {name}')
-    patch_clustersecret_status(
-        logger=logger,
-        name=name,
-        new_status={'syncedns': updated_matched},
-        custom_objects_api=custom_objects_api,
-    )
 
 
 @kopf.on.field('clustersecret.io', 'v1', 'clustersecrets', field='data')
@@ -125,7 +114,7 @@ def on_field_data(
 
 
 @kopf.on.create('clustersecret.io', 'v1', 'clustersecrets')
-async def create_fn(
+def create_fn(
     logger: logging.Logger,
     body: Dict[str, Any],
     **_
@@ -142,25 +131,22 @@ def on_namespace_event(
     """Watch for namespace events
     """
     event_type = event.get('type', None)
-
-    # Ignore events without type (sent on operator startup)
-    if event_type == None: return
-
     meta = event.get('object',{}).get('metadata',{})
+
+    # Ignore delete events and events without type (sent on operator startup)
+    if event_type == None or event_type == 'DELETED' or 'deletionTimestamp' in meta:
+        return
+
     ns = meta.get('name')
-    is_delete = event_type == 'DELETED' or 'deletionTimestamp' in meta
     logger.debug(f'Namespace event: {ns} re-syncing')
     for cluster_secret in csecs_cache.all_cluster_secret():
         obj_body = cluster_secret.body
         name = cluster_secret.name
+        in_namespace = secret_exists(logger, name, ns, v1)
 
-        matchedns = cluster_secret.synced_namespace
-
-        logger.debug(f'Old matched namespace: {matchedns} - name: {name}')
-        is_match = False if is_delete else secret_belongs(logger, obj_body, ns, meta.get('labels',{}))
-        if is_match and not ns in matchedns:
+        is_match = secret_belongs(logger, obj_body, ns, meta.get('labels',{}))
+        if is_match and not in_namespace:
             logger.debug(f'Cloning secret {name} into namespace {ns}')
-            matchedns.append(ns)
             sync_secret(
                 logger=logger,
                 namespace=ns,
@@ -168,26 +154,8 @@ def on_namespace_event(
                 v1=v1,
             )
 
-        elif not is_match and ns in matchedns:
-            matchedns.remove(ns)
-            if is_delete:
-                logger.debug(f'Forgetting deleted namespace {ns}, matched by clustersecret {name}')
-            else:
-                delete_secret(logger, ns, name, v1)
-
-        else:
-            # Return without updating cache when nothing happened
-            return
-
-        cluster_secret.synced_namespace = matchedns
-        csecs_cache.set_cluster_secret(cluster_secret)
-
-        patch_clustersecret_status(
-            logger=logger,
-            name=cluster_secret.name,
-            new_status={'syncedns': matchedns},
-            custom_objects_api=custom_objects_api,
-        )
+        elif not is_match and in_namespace:
+            delete_secret(logger, ns, name, v1)
 
 
 @kopf.on.event('', 'v1', 'secrets')

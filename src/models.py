@@ -7,4 +7,3 @@ class BaseClusterSecret(BaseModel):
     uid: str
     name: str
     body: Dict[str, Any]
-    synced_namespace: List[str]

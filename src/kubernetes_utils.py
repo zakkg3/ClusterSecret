@@ -9,41 +9,7 @@ from kubernetes.client import CoreV1Api, CustomObjectsApi, exceptions, V1ObjectM
 
 from models import BaseClusterSecret
 from os_utils import get_blocked_labels, get_replace_existing, get_version
-from consts import VERSION_ANNOTATION, BLOCKED_ANNOTATIONS, CLUSTER_SECRET_LABEL
-
-
-def patch_clustersecret_status(
-        logger: logging.Logger,
-        name: str,
-        new_status,
-        custom_objects_api: CustomObjectsApi,
-):
-    """Patch the status of a given clustersecret object
-    """
-    group = 'clustersecret.io'
-    version = 'v1'
-    plural = 'clustersecrets'
-
-    # Retrieve the clustersecret object
-    clustersecret = custom_objects_api.get_cluster_custom_object(
-        group=group,
-        version=version,
-        plural=plural,
-        name=name,
-    )
-
-    # Update the status field
-    clustersecret['status'] = new_status
-    logger.debug(f'Updated clustersecret manifest: {clustersecret}')
-
-    # Perform a patch operation to update the custom resource
-    return custom_objects_api.patch_cluster_custom_object(
-        group=group,
-        version=version,
-        plural=plural,
-        name=name,
-        body=clustersecret,
-    )
+from consts import VERSION_ANNOTATION, BLOCKED_ANNOTATIONS, CREATE_BY_LABEL
 
 
 def get_ns_list(
@@ -114,7 +80,7 @@ def delete_secret(
         if e.status == 404:
             logger.warning(f'The namespace {namespace} may not exist anymore: Not found')
         else:
-            logger.warning('Something weird deleting the secret')
+            logger.warning(f'Could not delete secret {name} from namespace {namespace}. enable debug for details')
             logger.debug(f'details: {e}')
 
 
@@ -130,6 +96,22 @@ def secret_exists(
         namespace=namespace,
         v1=v1,
     ) is not None
+
+
+def secret_metadata(
+        logger: logging.Logger,
+        name: str,
+        namespace: str,
+        v1: CoreV1Api,
+) -> Optional[V1ObjectMeta]:
+    try:
+        secret = v1.read_namespaced_secret(name, namespace)
+        return secret.metadata
+    except exceptions.ApiException as e:
+        if e.status == 404:
+            return None
+        logger.warning(f'Cannot read secret {name} in namespace {namespace}.')
+        raise kopf.TemporaryError(f'Error reading secret {e}')
 
 
 def secret_belongs(
@@ -187,27 +169,24 @@ def sync_clustersecret(
     # get all ns matching.
     matchedns = get_ns_list(logger, body, v1)
 
+    # get all ns with secret created by this cluster secret
+    currentns = get_child_secret_namespaces(logger, name, v1)
+
     # sync in all matched NS
     logger.info(f'Syncing on Namespaces: {matchedns}')
     for ns in matchedns:
         sync_secret(logger, ns, body, v1)
+
+    to_remove = set(currentns).difference(set(matchedns))
+    for ns in to_remove:
+        delete_secret(logger, ns, name, v1)
 
     # Updating the cache
     csecs_cache.set_cluster_secret(BaseClusterSecret(
         uid=meta.get('uid'),
         name=name,
         body=body,
-        synced_namespace=matchedns,
     ))
-
-    # Patch synced_ns field
-    logger.debug(f'Patching clustersecret {name}')
-    patch_clustersecret_status(
-        logger=logger,
-        name=name,
-        new_status={'syncedns': matchedns},
-        custom_objects_api=custom_objects_api,
-    )
 
 
 def sync_secret(
@@ -355,7 +334,7 @@ def create_secret_metadata(
                     yield item
 
     base_labels = {
-        CLUSTER_SECRET_LABEL: 'true'
+        CREATE_BY_LABEL: csec_body.get('metadata', {}).get('name')
     }
     base_annotations = {
         VERSION_ANNOTATION: get_version(),
@@ -380,6 +359,25 @@ def create_secret_metadata(
         annotations=dict(_annotations),
         labels=dict(_labels),
     )
+
+
+def get_child_secret_namespaces(
+        logger: logging.Logger,
+        name: str,
+        v1: CoreV1Api,
+) -> List[str]:
+    """Retrieve all namespaces with secret created by clustersecret with provided name
+    """
+
+    try:
+        current_secrets = v1.list_secret_for_all_namespaces(label_selector=f'{CREATE_BY_LABEL}={name}')
+        logger.debug(f'Obtained current secret list {current_secrets}')
+        currentns = [sec.metadata.namespace for sec in current_secrets.items]
+    except exceptions.ApiException as e:
+        logger.error(f'Cannot list secrets. enable debug for details')
+        logger.debug(f'Kube exception {e}')
+        raise kopf.TemporaryError('Error listing secrets')
+    return currentns
 
 
 def get_custom_objects_by_kind(

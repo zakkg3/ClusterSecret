@@ -4,7 +4,7 @@ Constants used by the project
 
 VERSION_ANNOTATION = 'clustersecret.io/version'
 
-CLUSTER_SECRET_LABEL = "clustersecret.io"
+CREATE_BY_LABEL = "clustersecret.io/created-by"
 
 BLOCKED_ANNOTATIONS = ["kopf.zalando.org", "kubectl.kubernetes.io"]
 
