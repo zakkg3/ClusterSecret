@@ -43,6 +43,7 @@ class TestClusterSecretHandler(unittest.TestCase):
             name="mysecret",
             uid="mysecretuid",
             logger=self.logger,
+            reason="update",
         )
 
         # New data should be in the cache.
@@ -99,6 +100,7 @@ class TestClusterSecretHandler(unittest.TestCase):
                 name="mysecret",
                 uid="mysecretuid",
                 logger=self.logger,
+                reason="update",
             )
 
         # Namespaced secret should be updated.
@@ -226,6 +228,7 @@ class TestClusterSecretHandler(unittest.TestCase):
                 name="mysecret",
                 uid="mysecretuid",
                 logger=self.logger,
+                reason="update",
             )
 
         # Namespaced secret should be updated with the new data.
