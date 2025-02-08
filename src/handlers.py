@@ -248,6 +248,19 @@ async def namespace_watcher(logger: logging.Logger, meta: kopf.Meta, **_):
             custom_objects_api=custom_objects_api,
         )
 
+@kopf.on.update('', 'v1', 'secrets')
+async def on_secret_update(logger: logging.Logger, name: str, namespace: str, **_):
+    """Watch for secret update events
+    """
+    for cached_cluster_secret in csecs_cache.all_cluster_secret():
+        body = cached_cluster_secret.body
+
+        if 'valueFrom' not in body['data']:
+            continue
+        elif name == body['data']['valueFrom']['secretKeyRef']['name'] and namespace == body['data']['valueFrom']['secretKeyRef']['namespace']:
+            logger.info(f'Secret {name} in namespace {namespace}, which linked with ClusterSecret {cached_cluster_secret.name} was changed. Re-syncing')
+            for ns in cached_cluster_secret.synced_namespace:
+                sync_secret(logger, ns, body, v1)
 
 @kopf.on.startup()
 async def startup_fn(logger: logging.Logger, **_):
