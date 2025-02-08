@@ -165,7 +165,8 @@ async def create_fn(
         synced_namespace=matchedns,
     ))
 
-    # return for what ??? Should be deleted ??
+    # This return is mandatory! It's used to update the status of the CRD
+    # https://kopf.readthedocs.io/en/stable/results/
     return {'syncedns': matchedns}
 
 
