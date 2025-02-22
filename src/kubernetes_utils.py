@@ -115,7 +115,7 @@ def delete_secret(
     logger.info(f'deleting secret {name} from namespace {namespace}')
     try:
         v1.delete_namespaced_secret(name, namespace)
-    except rest.ApiException as e:
+    except exceptions.ApiException as e:
         if e.status == 404:
             logger.warning(f'The namespace {namespace} may not exist anymore: Not found')
         else:
@@ -219,7 +219,7 @@ def sync_secret(
     )
     body.type = secret_type
     body.data = data
-    logger.info(f'cloning secret in namespace {namespace}')
+    logger.info(f'Syncing secret {sec_name} in namespace {namespace}.')
     logger.debug(f'V1Secret= {body}')
 
     try:
@@ -228,42 +228,26 @@ def sync_secret(
 
         # If nothing returned, the secret does not exist, creating it then
         if metadata is None:
-            logger.info('Using create_namespaced_secret')
+            logger.info(f'Creating new secret {sec_name} in namespace {namespace}.')
             logger.debug(f'response is {v1.create_namespaced_secret(namespace, body)}')
             return
 
-        if metadata.annotations is None:
-            logger.info(
-                f'secret `{sec_name}` exist but it does not have annotations, so is not managed by ClusterSecret',
-            )
+        if metadata.annotations is None or metadata.annotations.get(CREATE_BY_ANNOTATION) is None:
+            logger.info(f'Secret {sec_name} already exist in namespace {namespace} and is not managed by ClusterSecret.')
 
             # If we should not overwrite existing secrets
             if not get_replace_existing():
-                logger.info(
-                    f'secret `{sec_name}` will not be replaced. '
-                    'You can enforce this by setting env REPLACE_EXISTING to true.',
-                )
-                return
-        elif metadata.annotations.get(CREATE_BY_ANNOTATION) is None:
-            logger.error(
-                f"secret `{sec_name}` already exist in namespace '{namespace}' and is not managed by ClusterSecret",
-            )
-
-            if not get_replace_existing():
-                logger.info(
-                    f'secret `{sec_name}` will not be replaced. '
-                    'You can enforce this by setting env REPLACE_EXISTING to true.',
-                )
+                logger.info(f'Secret {sec_name} in namespace {namespace} will not be replaced. You can enforce this by setting env REPLACE_EXISTING to true.')
                 return
 
-        logger.info(f'Replacing secret {sec_name}')
+        logger.info(f'Replacing secret {sec_name} in namespace {namespace}.')
         v1.replace_namespaced_secret(
             name=sec_name,
             namespace=namespace,
             body=body,
         )
-    except rest.ApiException as e:
-        logger.error('Can not create a secret, it is base64 encoded? enable debug for details')
+    except exceptions.ApiException as e:
+        logger.error('Can not create a secret, it is base64 encoded? Enable debug for details.')
         logger.debug(f'data: {data}')
         logger.debug(f'Kube exception {e}')
 
@@ -356,6 +340,6 @@ def get_custom_objects_by_kind(
         )
 
         return custom_objects['items']
-    except rest.ApiException as e:
+    except exceptions.ApiException as e:
         # Properly handle API exceptions
-        raise rest.ApiException(f'Error while retrieving custom objects: {e}')
+        raise exceptions.ApiException(f'Error while retrieving custom objects: {e}')
