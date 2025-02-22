@@ -172,6 +172,13 @@ def sync_secret(
     annotations = cs_metadata.get('annotations', None)
     labels = cs_metadata.get('labels', None)
 
+    try:
+        v1.read_namespace(name=namespace)
+    except exceptions.ApiException as e:
+        logger.debug(f'Namespace {namespace} not found while syncing secret {sec_name}. Never mind on this rare situation it will be handled in other place.')
+        if e.status == 404:
+            return
+
     if 'data' not in body:
         raise kopf.TemporaryError('Property data is missing.')
 
