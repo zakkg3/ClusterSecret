@@ -22,6 +22,10 @@ spec:
       labels:
         app: clustersecret
       {{- include "cluster-secret.selectorLabels" . | nindent 8 }}
+      annotations:
+        {{- range $key, $value := .Values.podAnnotations }}
+        {{- printf "%s: %s" $key (tpl $value $ | quote) | nindent 8 }}
+        {{- end }}
     spec:
       securityContext:
         runAsUser: 100 # 100 is set by the container and can NOT be changed here - this would result in a getpwuid() error
@@ -31,6 +35,7 @@ spec:
       {{- end }}
       containers:
       - env:
+        {{- .Values.env | toYaml | nindent 8 }}
         - name: KUBERNETES_CLUSTER_DOMAIN
           value: {{ .Values.kubernetesClusterDomain }}
         - name: CLUSTER_SECRET_VERSION

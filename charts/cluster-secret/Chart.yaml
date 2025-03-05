@@ -1,13 +1,13 @@
 apiVersion: v2
 name: cluster-secret
 description: ClusterSecret Operator
-kubeVersion: '>= 1.16.0-0'
+kubeVersion: '>= 1.25.0-0'
 type: application
-version: 0.4.2
+version: 0.5.2
 icon: https://clustersecret.com/assets/csninjasmall.png
 sources:
 - https://github.com/zakkg3/ClusterSecret
-appVersion: "0.0.10"
+appVersion: "0.0.14"
 maintainers:
 - email: zakkg3@gmail.com
   name: zakkg3

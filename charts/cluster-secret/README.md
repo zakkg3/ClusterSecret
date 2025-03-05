@@ -18,7 +18,6 @@ Here is how it looks like:
 kind: ClusterSecret
 apiVersion: clustersecret.io/v1
 metadata:
-  namespace: clustersecret
   name: default-wildcard-certifiate
 matchNamespace:
   - prefix_ns-*
@@ -57,7 +56,7 @@ Clustersecrets automates this. It keep track of any modification in your secret 
 
 ## Requirements
 
-Current is 0.0.10 tested on > 1.27.1
+Current is 0.0.14 tested on > 1.27.1
 Version 0.0.9 is tested for Kubernetes >= 1.19 up to 1.27.1
 
 For older kubernes (<1.19) use the image tag "0.0.6" in  yaml/02_deployment.yaml
@@ -66,5 +65,5 @@ For older kubernes (<1.19) use the image tag "0.0.6" in  yaml/02_deployment.yaml
 
 ```bash
 helm repo add clustersecret https://charts.clustersecret.com/
-helm install clustersecret clustersecret/cluster-secret --version 0.4.2 -n clustersecret --create-namespace
+helm install clustersecret clustersecret/cluster-secret --version 0.4.3 -n clustersecret --create-namespace
 ```
