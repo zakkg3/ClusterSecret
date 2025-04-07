@@ -30,6 +30,13 @@ spec:
               value: "v0.0.14"
             - name: REPLACE_EXISTING
               value: "false"
+          resources:
+            limits:
+              cpu: 40m
+              memory: 134Mi
+            requests:
+              cpu: 40m
+              memory: 134Mi
           # imagePullPolicy: Always
           # Uncomment next lines for debug:
           # command:
