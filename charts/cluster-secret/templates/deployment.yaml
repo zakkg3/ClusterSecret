@@ -51,7 +51,8 @@ spec:
             path: /healthz
             port: 8080
           periodSeconds: 120
-        resources: {}
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
       serviceAccountName: {{ include "cluster-secret.fullname" . }}-account
       {{- with .Values.nodeSelector }}
       nodeSelector:
