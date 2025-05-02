@@ -1,0 +1,19 @@
+domain: clustersecret.io
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: csgo
+repo: github.com/zakkg3/ClusterSecret
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: clustersecret.io
+  group: cache
+  kind: ClusterSecret
+  path: github.com/zakkg3/ClusterSecret/api/v1alpha1
+  version: v1alpha1
+version: "3"
