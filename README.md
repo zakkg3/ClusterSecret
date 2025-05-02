@@ -16,6 +16,10 @@ Full documentation is available at [https://clustersecret.com](https://clusterse
 
 <img src="https://github.com/zakkg3/ClusterSecret/blob/master/docs/clusterSecret.png" alt="Clustersecret diagram">
 
+## Version 1.0 introduces many breaking changes.
+
+From version 1.0 ClusterSecret is golang based. please report any incompatibility.
+
 ---
 
 Here is how it looks like:
