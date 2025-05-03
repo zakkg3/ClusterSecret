@@ -88,38 +88,146 @@ The Go implementation follows the standard Kubernetes operator pattern using con
 
 The transition from Python to Go is a significant undertaking, but it will provide benefits in terms of performance, resource usage, and maintainability. The current state of the Go implementation provides a good foundation, but significant work remains to be done to achieve feature parity with the Python implementation.
 
+## CRD Version 2 Design
+
+The Go implementation introduces a new v2 of the ClusterSecret CRD with significant improvements over v1. Here's a comparison:
+
+### v1 vs v2 Format
+
+**v1 Format (Current Python Implementation)**:
+```yaml
+apiVersion: clustersecret.io/v1
+kind: ClusterSecret
+metadata:
+  name: clustersecret-v1-sample
+matchNamespace:
+  - foo.*
+avoidNamespaces:
+  - kube-.*
+type: Opaque
+data:
+  a: bG9yZW0K
+```
+
+**v2 Format (New Go Implementation)**:
+```yaml
+apiVersion: clustersecret.io/v2
+kind: ClusterSecret
+metadata:
+  name: clustersecret-v2-sample
+spec:
+  matchNamespaces:
+    - foo.*
+  avoidNamespaces:
+    - kube-.*
+  template:
+    data:
+      a: bG9yZW0K
+```
+
+### Enhanced Namespace Selection
+
+The v2 CRD introduces Kubernetes-style selectors for more powerful namespace selection:
+
+```yaml
+spec:
+  namespaceSelectorTerms:
+    - matchFields:
+        # Select namespaces by name using regex
+        - key: metadata.name
+          operator: InRegex
+          values:
+            - foo.*
+        - key: metadata.name
+          operator: NotInRegex
+          values:
+            - kube-.*
+    - matchExpressions:
+        # Select namespaces by labels
+        - key: environment
+          operator: In
+          values:
+            - prod
+            - staging
+        # Support for numeric comparisons
+        - key: my-int-label
+          operator: Gt
+          values:
+            - "25"
+```
+
+This provides much more flexibility in selecting namespaces based on both names and labels, similar to how pod node affinities work in Kubernetes.
+
+### Enhanced Secret Data References
+
+The v2 CRD introduces improved ways to reference data from existing secrets:
+
+1. **dataFrom** - Load all keys from referenced secrets:
+```yaml
+spec:
+  dataFrom:
+    - secretRef:
+        name: source-secret
+        namespace: default
+```
+
+2. **dataValueFrom** - Load specific keys from secrets with optional renaming:
+```yaml
+spec:
+  dataValueFrom:
+    foo:
+      secretKeyRef:
+        name: source-secret-1
+        namespace: default
+        key: foo
+    renamed-moo:
+      secretKeyRef:
+        name: source-secret-2
+        namespace: default
+        key: moo
+```
+
+### Seamless Conversion Support
+
+The Go implementation leverages Kubebuilder's conversion support to provide seamless migration from v1 to v2:
+- Deploying a v1 ClusterSecret makes it available as both v1 and v2 simultaneously
+- The operator internally processes everything as v2
+- Users can migrate at their own pace
+
 ## To-Do List for Go Implementation
 
 ### Core Functionality
- - Update the ClusterSecret CRD to match the production version (group: clustersecret.io, version: v1)
- - Implement regex pattern matching for namespace selection
+ - Complete the implementation of the v2 CRD with proper spec validation
+ - Implement the enhanced namespace selection using namespaceSelectorTerms
  - Implement the core reconciliation logic for secret propagation
  - Add support for secret updates and propagation of changes
  - Implement cleanup of secrets when ClusterSecret is deleted
  - Add finalizers for proper resource cleanup
 
 ### Advanced Features
- - Support for the `valueFrom.secretKeyRef` functionality to reference existing secrets
- - Support for selective key copying with the `keys` field
+ - Complete the implementation of dataFrom and dataValueFrom functionality
+ - Support for immutable secrets
  - Implement annotation and label propagation to child secrets
  - Add support for watching namespace creation to automatically propagate secrets to new namespaces
  - Implement the `REPLACE_EXISTING` environment variable functionality
 
 ### Testing & Quality
  - Implement e2e tests similar to those in the conformance directory
- - Add unit tests for all components
+ - Add unit tests for all components to prevent regressions
  - Implement linting and other code quality checks
  - Add integration tests with different Kubernetes versions
 
 ### Deployment & Compatibility
- - Change API version to v2
- - Make it backwards compatible with v1
+ - Finalize the v1 to v2 conversion logic
+ - Ensure backward compatibility with existing v1 resources
  - Update Helm charts for the Go implementation
  - Support multi-architecture builds (amd64, arm64, s390x, etc.)
  - Add migration path from Python to Go implementation
 
 ### Documentation
- - Update all documentation to reflect the Go implementation
+ - Update all documentation to reflect the Go implementation and v2 CRD
+ - Document the new namespace selection features
+ - Document the enhanced secret data reference features
  - Add developer documentation for contributing to the Go codebase
  - Document the architecture and design decisions
- - Update examples to use the new CRD format
+ - Update examples to use both v1 and v2 CRD formats
