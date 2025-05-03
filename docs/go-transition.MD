@@ -24,10 +24,20 @@ ClusterSecret is a Kubernetes operator that allows you to define secrets once an
 - Basic structure is in place:
   - main.go: Sets up the controller manager
   - controllers/clustersecret_controller.go: Contains the controller implementation (incomplete)
-  - v1alpha1/clustersecret_types.go: Defines the ClusterSecret type (incomplete)
+  - api/v1alpha1/clustersecret_types.go: Defines the ClusterSecret type (incomplete)
+- The current API implementation is very basic:
+  ```go
+  // ClusterSecretSpec defines the desired state of ClusterSecret
+  type ClusterSecretSpec struct {
+      // Data is the data for the clustersecret.
+      Data string `json:"Data"`
+      // to-do DataString
+  }
+  ```
 - The CRD in the Go implementation is different from the production CRD:
-  - Go CRD: `cache.clustersecret.io_clustersecrets.yaml`
+  - Go CRD: `cache.clustersecret.io_clustersecrets.yaml` (v1alpha1)
   - Production CRD: `clustersecret.io/v1`
+- The API group is defined as `cache.clustersecret.io` instead of `clustersecret.io`
 - The Reconcile function in the controller is currently a stub that doesn't implement the actual business logic
 
 ## How the Go Implementation Works
@@ -66,9 +76,61 @@ The Go implementation follows the standard Kubernetes operator pattern using con
 
 4. **Reconciliation Logic**: The Reconcile function is where the actual business logic would be implemented, but it's currently incomplete.
 
+## API Implementation Details
+
+The API implementation is a critical part of the Go version. Here's how it works:
+
+1. **API Definition**: The API types are defined in the `api/v1alpha1` directory:
+   - `clustersecret_types.go`: Defines the ClusterSecret struct and its fields
+   - `groupversion_info.go`: Defines the API group and version
+
+2. **Current API State**: The current API implementation is very basic and doesn't match the production CRD:
+   ```go
+   // ClusterSecretSpec defines the desired state of ClusterSecret
+   type ClusterSecretSpec struct {
+       // Data is the data for the clustersecret.
+       Data string `json:"Data"`
+       // to-do DataString
+   }
+   ```
+
+3. **API Registration**: The API types are registered with the Kubernetes scheme in the `init()` function:
+   ```go
+   func init() {
+       SchemeBuilder.Register(&ClusterSecret{}, &ClusterSecretList{})
+   }
+   ```
+
+4. **Controller-API Connection**: The controller uses the API types through the controller-runtime client:
+   ```go
+   // In main.go
+   if err = (&controllers.ClusterSecretReconciler{
+       Client: mgr.GetClient(),
+       Scheme: mgr.GetScheme(),
+   }).SetupWithManager(mgr); err != nil {
+       // ...
+   }
+   ```
+
+5. **Watch Configuration**: The controller is configured to watch for changes to ClusterSecret resources:
+   ```go
+   // In controllers/clustersecret_controller.go
+   func (r *ClusterSecretReconciler) SetupWithManager(mgr ctrl.Manager) error {
+       return ctrl.NewControllerManagedBy(mgr).
+           For(&cachev1alpha1.ClusterSecret{}).
+           Owns(&v1.Secret{}).
+           Complete(r)
+   }
+   ```
+
+This API implementation needs to be significantly updated to match either the v1 production CRD or the proposed v2 CRD design.
+
 ## What Needs to Be Completed
 
-1. **Update the ClusterSecret Type**: The ClusterSecret type in v1alpha1/clustersecret_types.go needs to be updated to include the `matchNamespace` and `avoidNamespaces` fields that are present in the production CRD.
+1. **Update the ClusterSecret API**: The ClusterSecret API in api/v1alpha1/clustersecret_types.go needs significant updates:
+   - Change the API group from `cache.clustersecret.io` to `clustersecret.io`
+   - Update the ClusterSecretSpec to include fields like `matchNamespace` and `avoidNamespaces`
+   - Alternatively, implement the v2 CRD with the improved structure and conversion webhooks
 
 2. **Implement the Reconcile Function**: The Reconcile function in controllers/clustersecret_controller.go needs to be implemented to:
    - Get the ClusterSecret resource
@@ -80,9 +142,11 @@ The Go implementation follows the standard Kubernetes operator pattern using con
 
 4. **Add Status Updates**: Update the status of the ClusterSecret resource to reflect the current state of the propagation.
 
-5. **Add Tests**: Add unit and integration tests to ensure the Go implementation works correctly.
+5. **Implement Conversion Webhooks**: If supporting both v1 and v2 CRDs, implement conversion webhooks to convert between the versions.
 
-6. **Update Documentation**: Update the documentation to reflect the new Go implementation.
+6. **Add Tests**: Add unit and integration tests to ensure the Go implementation works correctly.
+
+7. **Update Documentation**: Update the documentation to reflect the new Go implementation.
 
 ## Conclusion
 
