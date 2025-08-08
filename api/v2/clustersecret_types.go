@@ -47,7 +47,7 @@ type ClusterSecretSpec struct {
 	DataFrom []DataFrom `json:"dataFrom,omitempty"`
 
 	// DataValueFrom sets a map of data keys and where to load their data from.
-	// This data is loaded after .spec.template.dataFrom, but is overriden by the .spec.template.data.* fields.
+	// This data is loaded after .spec.template.dataFrom, but is overridden by the .spec.template.data.* fields.
 	// +optional
 	// +nullable
 	DataValueFrom map[string]DataValueFrom `json:"dataValueFrom,omitempty"`
@@ -160,7 +160,7 @@ type SecretReference struct {
 	Namespace string `json:"namespace,omitempty"`
 }
 
-// DataValueFrom defines a source to read a specifc secret data field/key from,
+// DataValueFrom defines a source to read a specific secret data field/key from,
 // similar to a container's .env[*].valueFrom field.
 type DataValueFrom struct {
 	// SecretKeyRef from where to load additional data field from.
