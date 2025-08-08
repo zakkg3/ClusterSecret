@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	clustersecretiov2 "github.com/zakkg3/ClusterSecret/api/v2"
 	// +kubebuilder:scaffold:imports
@@ -30,11 +31,12 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
-	ctx       context.Context
-	cancel    context.CancelFunc
-	testEnv   *envtest.Environment
-	cfg       *rest.Config
-	k8sClient client.Client
+	ctx        context.Context
+	cancel     context.CancelFunc
+	testEnv    *envtest.Environment
+	cfg        *rest.Config
+	k8sClient  client.Client
+	k8sManager manager.Manager
 )
 
 func TestControllers(t *testing.T) {
@@ -76,7 +78,8 @@ var _ = BeforeSuite(func() {
 
 	// Setup manager to run in the background throughout the test suite.
 	// This is required when trying to access owned resources in the reconcile code.
-	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
+	// See: https://github.com/kubernetes-sigs/kubebuilder/blob/v4.7.1/docs/book/src/cronjob-tutorial/testdata/project/internal/controller/suite_test.go#L121-L158
+	k8sManager, err = ctrl.NewManager(cfg, ctrl.Options{
 		Scheme: scheme.Scheme,
 	})
 	Expect(err).ToNot(HaveOccurred())

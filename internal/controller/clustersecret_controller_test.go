@@ -7,6 +7,7 @@ package controller
 
 import (
 	"context"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -20,15 +21,23 @@ import (
 )
 
 var _ = Describe("ClusterSecret Controller", func() {
-	Context("When reconciling a resource", func() {
-		const resourceName = "test-resource"
+	// The controller is running in the background,
+	// so we test by querying the k8s client instead of running
+	// [ClusterSecretReconciler.Reconcile] manually.
+	// See: https://github.com/kubernetes-sigs/kubebuilder/blob/v4.7.1/docs/book/src/cronjob-tutorial/testdata/project/internal/controller/cronjob_controller_test.go
+	const (
+		ClusterSecretName = "test-resource"
 
+		timeout  = time.Second * 10
+		duration = time.Second * 10
+		interval = time.Millisecond * 250
+	)
+
+	Context("When reconciling a resource", func() {
+		// TODO: convert to test code that looks more like this: https://github.com/kubernetes-sigs/kubebuilder/blob/v4.7.1/docs/book/src/cronjob-tutorial/testdata/project/internal/controller/cronjob_controller_test.go
 		ctx := context.Background()
 
-		typeNamespacedName := types.NamespacedName{
-			Name:      resourceName,
-			Namespace: "default", // TODO(user):Modify as needed
-		}
+		typeNamespacedName := types.NamespacedName{Name: ClusterSecretName}
 		clustersecret := &clustersecretiov2.ClusterSecret{}
 
 		BeforeEach(func() {
@@ -37,7 +46,7 @@ var _ = Describe("ClusterSecret Controller", func() {
 			if err != nil && errors.IsNotFound(err) {
 				resource := &clustersecretiov2.ClusterSecret{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
+						Name:      ClusterSecretName,
 						Namespace: "default",
 					},
 					// TODO(user): Specify other spec details if needed.
@@ -58,8 +67,8 @@ var _ = Describe("ClusterSecret Controller", func() {
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
 			controllerReconciler := &ClusterSecretReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
+				Client: k8sManager.GetClient(),
+				Scheme: k8sManager.GetScheme(),
 			}
 
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
