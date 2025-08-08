@@ -1,4 +1,5 @@
-## Append samples you want in your CSV to this file as resources ##
+## Append samples of your project ##
 resources:
-- cache_v1alpha1_clustersecret.yaml
+- _v2_clustersecret.yaml
+- _v1_clustersecret.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

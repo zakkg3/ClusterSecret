@@ -2,20 +2,10 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
   name: manager-role
 rules:
 - apiGroups:
-  - apps
-  resources:
-  - namespace
-  verbs:
-  - get
-  - list
-  - update
-  - watch
-- apiGroups:
-  - cache.clustersecret.io
+  - clustersecret.io
   resources:
   - clustersecrets
   verbs:
@@ -27,19 +17,27 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cache.clustersecret.io
+  - clustersecret.io
   resources:
   - clustersecrets/finalizers
   verbs:
   - update
 - apiGroups:
-  - cache.clustersecret.io
+  - clustersecret.io
   resources:
   - clustersecrets/status
   verbs:
   - get
   - patch
   - update
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -50,4 +48,5 @@ rules:
   - get
   - list
   - patch
+  - update
   - watch
