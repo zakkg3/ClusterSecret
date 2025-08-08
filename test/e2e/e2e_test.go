@@ -3,6 +3,8 @@
 // SPDX-FileCopyrightText: 2024 Nicolas Kowenski
 // SPDX-License-Identifier: MIT
 
+//go:build e2e
+
 package e2e
 
 import (
@@ -49,7 +51,7 @@ var _ = Describe("controller", Ordered, func() {
 			var err error
 
 			// projectimage stores the name of the image used in the example
-			var projectimage = "example.com/clustersecret-operator:v0.0.1"
+			projectimage := "example.com/clustersecret-operator:v0.0.1"
 
 			By("building the manager(Operator) image")
 			cmd := exec.Command("make", "docker-build", fmt.Sprintf("IMG=%s", projectimage))
@@ -105,7 +107,6 @@ var _ = Describe("controller", Ordered, func() {
 				return nil
 			}
 			EventuallyWithOffset(1, verifyControllerUp, time.Minute, time.Second).Should(Succeed())
-
 		})
 	})
 })
