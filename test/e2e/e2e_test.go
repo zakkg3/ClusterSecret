@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/zakkg3/CsGo/test/utils"
+	"github.com/zakkg3/ClusterSecret/test/utils"
 )
 
 const namespace = "clustersecret-operator-system"

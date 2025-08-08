@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	clustersecretiov2 "github.com/zakkg3/CsGo/api/v2"
+	clustersecretiov2 "github.com/zakkg3/ClusterSecret/api/v2"
 )
 
 var _ = Describe("ClusterSecret Controller", func() {

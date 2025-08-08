@@ -25,8 +25,8 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	clustersecretiov2 "github.com/zakkg3/CsGo/api/v2"
-	"github.com/zakkg3/CsGo/internal/util"
+	clustersecretiov2 "github.com/zakkg3/ClusterSecret/api/v2"
+	"github.com/zakkg3/ClusterSecret/internal/util"
 )
 
 var (

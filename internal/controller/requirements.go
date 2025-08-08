@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	clustersecretiov2 "github.com/zakkg3/CsGo/api/v2"
+	clustersecretiov2 "github.com/zakkg3/ClusterSecret/api/v2"
 )
 
 func getNamespaceFields(ns *corev1.Namespace) labels.Set {

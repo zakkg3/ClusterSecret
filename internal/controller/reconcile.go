@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	clustersecretiov2 "github.com/zakkg3/CsGo/api/v2"
+	clustersecretiov2 "github.com/zakkg3/ClusterSecret/api/v2"
 )
 
 func (r *ClusterSecretReconciler) reconcileOutOfDateSecret(ctx context.Context, req ctrl.Request, sec, expectedSecret *corev1.Secret) error {

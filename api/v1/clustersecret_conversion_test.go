@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	clustersecretiov2 "github.com/zakkg3/CsGo/api/v2"
+	clustersecretiov2 "github.com/zakkg3/ClusterSecret/api/v2"
 )
 
 func TestConvertTo_matchNamespace(t *testing.T) {

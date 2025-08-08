@@ -32,7 +32,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	clustersecretiov2 "github.com/zakkg3/CsGo/api/v2"
+	clustersecretiov2 "github.com/zakkg3/ClusterSecret/api/v2"
 	//+kubebuilder:scaffold:imports
 )
 
