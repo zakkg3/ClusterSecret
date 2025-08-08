@@ -8,6 +8,7 @@ package utils
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	"fmt"
 	"os"
 	"os/exec"
@@ -24,6 +25,8 @@ const (
 	certmanagerVersion = "v1.16.3"
 	certmanagerURLTmpl = "https://github.com/cert-manager/cert-manager/releases/download/%s/cert-manager.yaml"
 )
+
+var kubeconfigPath string
 
 func warnError(err error) {
 	_, _ = fmt.Fprintf(GinkgoWriter, "warning: %v\n", err)
@@ -156,14 +159,53 @@ func IsCertManagerCRDsInstalled() bool {
 
 // LoadImageToKindClusterWithName loads a local docker image to the kind cluster
 func LoadImageToKindClusterWithName(name string) error {
-	cluster := "kind"
-	if v, ok := os.LookupEnv("KIND_CLUSTER"); ok {
-		cluster = v
-	}
-	kindOptions := []string{"load", "docker-image", name, "--name", cluster}
+	kindOptions := []string{"load", "docker-image", name, "--name", GetKindCluster()}
 	cmd := exec.Command("kind", kindOptions...)
 	_, err := Run(cmd)
 	return err
+}
+
+// SetKindKubeconfig save the kubeconfig for the kind cluster to a temporary file
+// and sets it as the KUBECONFIG environment variable
+func SetKindKubeconfig() error {
+	kindOptions := []string{"get", "kubeconfig", "--name", GetKindCluster()}
+	cmd := exec.Command("kind", kindOptions...)
+	kubeconfig, err := Run(cmd)
+	if err != nil {
+		return err
+	}
+	file, err := os.CreateTemp("", "kubeconfig-*")
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := file.Close(); err != nil {
+			warnError(err)
+		}
+	}()
+	if _, err := file.WriteString(kubeconfig); err != nil {
+		return err
+	}
+	path := file.Name()
+	if err := os.Setenv("KUBECONFIG", path); err != nil {
+		return err
+	}
+	_, _ = fmt.Fprintf(GinkgoWriter, "export KUBECONFIG=%q\n", path)
+	kubeconfigPath = path
+	return nil
+}
+
+// UnsetKindKubeconfig clears the KUBECONFIG file and environment variable
+func UnsetKindKubeconfig() error {
+	if kubeconfigPath == "" {
+		return fmt.Errorf("missing kubeconfig path")
+	}
+	return os.Remove(kubeconfigPath)
+}
+
+// GetKindCluster gets the name of the kind cluster to use
+func GetKindCluster() string {
+	return cmp.Or(os.Getenv("KIND_CLUSTER"), "clustersecret-operator")
 }
 
 // GetNonEmptyLines converts given command output string into individual objects
