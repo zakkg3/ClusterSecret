@@ -256,10 +256,10 @@ const (
 // ClusterSecret is the Schema for the clustersecrets API
 type ClusterSecret struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitzero"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ClusterSecretSpec   `json:"spec,omitzero"`
-	Status ClusterSecretStatus `json:"status,omitzero"`
+	Spec   ClusterSecretSpec   `json:"spec,omitempty"`
+	Status ClusterSecretStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -267,7 +267,7 @@ type ClusterSecret struct {
 // ClusterSecretList contains a list of ClusterSecret
 type ClusterSecretList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitzero"`
+	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []ClusterSecret `json:"items"`
 }
 
