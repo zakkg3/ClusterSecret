@@ -24,6 +24,7 @@ import (
 	clustersecretiov1 "github.com/zakkg3/ClusterSecret/api/v1"
 	clustersecretiov2 "github.com/zakkg3/ClusterSecret/api/v2"
 	"github.com/zakkg3/ClusterSecret/internal/controller"
+	webhookclustersecretiov2 "github.com/zakkg3/ClusterSecret/internal/webhook/v2"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -199,8 +200,9 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterSecret")
 		os.Exit(1)
 	}
+	// nolint:goconst
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = (&clustersecretiov2.ClusterSecret{}).SetupWebhookWithManager(mgr); err != nil {
+		if err = webhookclustersecretiov2.SetupClusterSecretWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "ClusterSecret")
 			os.Exit(1)
 		}

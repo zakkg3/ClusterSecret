@@ -254,33 +254,31 @@ const (
 	SecretStatusFailedDelete SecretStatus = "FailedDelete"
 )
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Cluster,shortName=csec
-//+kubebuilder:storageversion
-//+kubebuilder:printcolumn:name=Ready,description=Number of ready secrets vs how many secrets it attempts to create,JSONPath=.status.readySecretsRatio,type=string
-//+kubebuilder:printcolumn:name=Type,description=Secret Type,JSONPath=.spec.template.type,type=string
-//+kubebuilder:printcolumn:name=Data,description=Number of data fields in the secret,JSONPath=.status.dataCount,type=integer,format=int32
-//+kubebuilder:printcolumn:name=Age,description=Timestamp of when the ClusterSecret resource was created,type=date,JSONPath=.metadata.creationTimestamp
+// +kubebuilder:object:root=true
+// +kubebuilder:storageversion
+// +kubebuilder:conversion:hub
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster,shortName=csec
+// +kubebuilder:printcolumn:name=Ready,description=Number of ready secrets vs how many secrets it attempts to create,JSONPath=.status.readySecretsRatio,type=string
+// +kubebuilder:printcolumn:name=Type,description=Secret Type,JSONPath=.spec.template.type,type=string
+// +kubebuilder:printcolumn:name=Data,description=Number of data fields in the secret,JSONPath=.status.dataCount,type=integer,format=int32
+// +kubebuilder:printcolumn:name=Age,description=Timestamp of when the ClusterSecret resource was created,type=date,JSONPath=.metadata.creationTimestamp
 
 // ClusterSecret is the Schema for the clustersecrets API
 type ClusterSecret struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata,omitzero"`
 
-	Spec   ClusterSecretSpec   `json:"spec,omitempty"`
-	Status ClusterSecretStatus `json:"status,omitempty"`
+	Spec   ClusterSecretSpec   `json:"spec,omitzero"`
+	Status ClusterSecretStatus `json:"status,omitzero"`
 }
 
-// Hub marks this type as a conversion hub.
-func (*ClusterSecret) Hub() {}
-
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // ClusterSecretList contains a list of ClusterSecret
 type ClusterSecretList struct {
 	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.ListMeta `json:"metadata,omitzero"`
 	Items           []ClusterSecret `json:"items"`
 }
 
