@@ -1,0 +1,36 @@
+# Typos: https://github.com/crate-ci/typos
+
+# To disable in a file, use:
+#
+#   some text with typo # spellchecker:disable-line
+#
+# or:
+#
+#   # spellchecker:off
+#   some text with typo
+#   # spellchecker:on
+
+[default.extend-identifiers]
+# "extend-identifiers" matches words joined together without space.
+# "HelloWorld" counts as 1 different string: "HelloWorld"
+
+ANDed = "ANDed" # used in Kubernetes' JSON Schemas
+ORed = "ORed" # used in Kubernetes' JSON Schemas
+
+[default]
+
+# Available flags: https://docs.rs/regex/latest/regex/#grouping-and-flags
+# E.g: (?Rm) means "R: CRLF counts as newline" & "m: ^/$ matches beginning/ending of line"
+extend-ignore-re = [
+	# Allows ignoring via "# spellchecker:disable-line"
+	'(?Rm)^.*(#|//)\s*spellchecker:disable-line$',
+
+	# Allows ignoring via "# spellchecker:off" & "# spellchecker:on"
+	'(?s)(#|//)\s*spellchecker:off.*?\n\s*(#|//)\s*spellchecker:on',
+
+	# PEM blocks (e.g for certificates, RSA keys, etc)
+	'-{5}BEGIN .*-{5}(?:$|[^-]{63,}-{5}END)',
+
+	# SemVer 2.0.0 versions with weird suffixes
+	'(?Rm)\bv\d+\.\d+\.\d+(-\S+)?(\+\S+)?\b'
+]
