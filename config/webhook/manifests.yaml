@@ -12,7 +12,7 @@ webhooks:
       namespace: system
       path: /mutate-clustersecret-io-v2-clustersecret
   failurePolicy: Fail
-  name: mclustersecret.kb.io
+  name: mclustersecret-v2.kb.io
   rules:
   - apiGroups:
     - clustersecret.io
@@ -38,7 +38,7 @@ webhooks:
       namespace: system
       path: /validate-clustersecret-io-v2-clustersecret
   failurePolicy: Fail
-  name: vclustersecret.kb.io
+  name: vclustersecret-v2.kb.io
   rules:
   - apiGroups:
     - clustersecret.io
