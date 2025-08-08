@@ -12,12 +12,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Cluster,shortName=csec
-//+kubebuilder:deprecatedversion:warning="The clustersecret.io/v1 apiVersion is no longer supported. Please migrate over to clustersecret.io/v2: https://clustersecret.io/update/v1-to-v2/"
-//+kubebuilder:printcolumn:name=Type,description=Secret Type,JSONPath=.type,type=string
-//+kubebuilder:printcolumn:name=Age,description=Timestamp of when the ClusterSecret resource was created,type=date,JSONPath=.metadata.creationTimestamp
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster,shortName=csec
+// +kubebuilder:deprecatedversion:warning="The clustersecret.io/v1 apiVersion is no longer supported. Please migrate over to clustersecret.io/v2: https://clustersecret.io/update/v1-to-v2/"
+// +kubebuilder:printcolumn:name=Type,description=Secret Type,JSONPath=.type,type=string
+// +kubebuilder:printcolumn:name=Age,description=Timestamp of when the ClusterSecret resource was created,type=date,JSONPath=.metadata.creationTimestamp
 
 // ClusterSecret is the Schema for the clustersecrets API
 type ClusterSecret struct {
@@ -87,10 +87,9 @@ type KopfStatus struct {
 	KopfProgressStatus `json:"progress"`
 }
 
-type KopfProgressStatus struct {
-}
+type KopfProgressStatus struct{}
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // ClusterSecretList contains a list of ClusterSecret
 type ClusterSecretList struct {
