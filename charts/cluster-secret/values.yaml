@@ -30,3 +30,22 @@ resources:
   requests:
     cpu: 40m
     memory: 134Mi
+
+# Create dynamic manifests via values.
+#
+# For example:
+# extraObjects:
+#   - kind: ClusterSecret
+#     apiVersion: clustersecret.io/v1
+#     metadata:
+#       namespace: clustersecret
+#       name: default-wildcard-certifiate
+#     matchNamespace:
+#       - prefix-ns-*
+#       - anothernamespace
+#     avoidNamespaces:
+#       - supersecret-ns
+#     data:
+#       tls.crt: BASE64
+#       tls.key: BASE64
+extraObjects: []
