@@ -1,4 +1,4 @@
-#  ClusterSecret 
+#  ClusterSecret
 [*clustersecret.com*](https://clustersecret.com/)
 
 Global inter-namespace cluster secrets - Secrets that work across namespaces.
@@ -20,7 +20,7 @@ apiVersion: clustersecret.io/v1
 metadata:
   name: default-wildcard-certifiate
 matchNamespace:
-  - prefix_ns-*
+  - prefix-ns-*
   - anothernamespace
 avoidNamespaces:
   - supersecret-ns
@@ -35,11 +35,11 @@ data:
 
 Use it for certificates, registry pulling credentials and so on.
 
-when you need a secret in more than one namespace. you have to: 
+when you need a secret in more than one namespace. you have to:
 
 1- Get the secret from the origin namespace.
 2- Edit the  the secret with the new namespace.
-3- Re-create the new secret in the new namespace. 
+3- Re-create the new secret in the new namespace.
 
 
 This could be done with one command:
@@ -50,7 +50,7 @@ kubectl get secret <secret-name> -n <source-namespace> -o yaml \
 | kubectl apply -n <destination-namespace> -f -
 ```
 
-Clustersecrets automates this. It keep track of any modification in your secret and it will also react to new namespaces. 
+Clustersecrets automates this. It keep track of any modification in your secret and it will also react to new namespaces.
 
 
 

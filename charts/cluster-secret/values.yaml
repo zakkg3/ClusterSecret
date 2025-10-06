@@ -28,14 +28,13 @@ podAnnotations: {}
 #
 # For example:
 # extraObjects:
-#   - |
-#     kind: ClusterSecret
+#   - kind: ClusterSecret
 #     apiVersion: clustersecret.io/v1
 #     metadata:
 #       namespace: clustersecret
 #       name: default-wildcard-certifiate
 #     matchNamespace:
-#       - prefix_ns-*
+#       - prefix-ns-*
 #       - anothernamespace
 #     avoidNamespaces:
 #       - supersecret-ns
