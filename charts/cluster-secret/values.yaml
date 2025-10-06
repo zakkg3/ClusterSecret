@@ -26,7 +26,6 @@ podAnnotations: {}
 
 resources:
   limits:
-    cpu: 40m
     memory: 134Mi
   requests:
     cpu: 40m
