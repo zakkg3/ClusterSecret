@@ -53,7 +53,7 @@ spec:
           periodSeconds: 120
         {{- with .Values.resources }}
         resources:
-          {{- toYaml . | indent 10 }}
+          {{- toYaml . | nindent 10 }}
         {{- end }}
       serviceAccountName: {{ include "cluster-secret.fullname" . }}-account
       {{- with .Values.nodeSelector }}
