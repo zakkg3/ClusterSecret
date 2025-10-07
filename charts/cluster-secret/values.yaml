@@ -24,6 +24,13 @@ affinity: {}
 # Additional Pod annotations
 podAnnotations: {}
 
+resources:
+  limits:
+    memory: 134Mi
+  requests:
+    cpu: 40m
+    memory: 134Mi
+
 # Create dynamic manifests via values.
 #
 # For example:
