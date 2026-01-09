@@ -3,7 +3,8 @@ from kubernetes import client, config
 from kubernetes.client.rest import ApiException
 
 # Load Kubernetes configuration from the default location or provide your own kubeconfig file path
-from k8s_utils import wait_for_pod_ready_with_events, ClusterSecretManager
+import subprocess
+from k8s_utils import wait_for_pod_ready_with_events, get_pod_logs, ClusterSecretManager
 
 config.load_kube_config()
 
@@ -50,6 +51,20 @@ class ClusterSecretCases(unittest.TestCase):
     def test_running(self):
         pods = api_instance.list_namespaced_pod(namespace=CLUSTER_SECRET_NAMESPACE)
         self.assertEqual(len(pods.items), 1)
+
+    def test_logging_info_level(self):
+        """Test that INFO level logging is working (default configuration)."""
+        logs = get_pod_logs({'app': 'clustersecret'}, namespace=CLUSTER_SECRET_NAMESPACE, tail_lines=500)
+
+        # Logs should not be empty
+        self.assertTrue(len(logs) > 0, "Logs should not be empty")
+
+        # Should NOT contain DEBUG level messages (default is INFO)
+        self.assertNotIn(' - DEBUG - ', logs, "Logs should not contain DEBUG level messages at INFO level")
+
+        # Should NOT contain the debug warning banner (only shown when LOG_LEVEL=DEBUG)
+        self.assertNotIn('DEBUG MODE ON - NOT FOR PRODUCTION', logs,
+                         "Debug warning banner should not appear at INFO level")
 
     def test_simple_cluster_secret(self):
         name = "simple-cluster-secret"
@@ -325,6 +340,127 @@ class ClusterSecretCases(unittest.TestCase):
                 annotations=annotations
             )
         )
+
+
+class LoggingDebugCases(unittest.TestCase):
+    """Test cases for DEBUG logging level - requires helm upgrade."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Upgrade helm release with DEBUG logging."""
+        print("\nUpgrading to DEBUG logging level...")
+        result = subprocess.run([
+            'helm', 'upgrade', 'cluster-secret', '../charts/cluster-secret',
+            '-n', 'cluster-secret',
+            '--set', 'image.repository=localhost/cluster-secret',
+            '--set', 'image.tag=e2e-test',
+            '--set', 'logging.level=DEBUG',
+            '--wait', '--timeout=60s'
+        ], capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"Helm upgrade failed: {result.stderr}")
+            raise Exception("Failed to upgrade to DEBUG logging")
+
+        # Wait for new pod to be ready
+        wait_for_pod_ready_with_events({'app': 'clustersecret'}, namespace=CLUSTER_SECRET_NAMESPACE, timeout_seconds=60)
+        print("DEBUG logging enabled")
+
+    @classmethod
+    def tearDownClass(cls):
+        """Restore INFO logging level."""
+        print("\nRestoring INFO logging level...")
+        subprocess.run([
+            'helm', 'upgrade', 'cluster-secret', '../charts/cluster-secret',
+            '-n', 'cluster-secret',
+            '--set', 'image.repository=localhost/cluster-secret',
+            '--set', 'image.tag=e2e-test',
+            '--set', 'logging.level=INFO',
+            '--wait', '--timeout=60s'
+        ], capture_output=True, text=True)
+
+    def test_logging_debug_level(self):
+        """Test that DEBUG level logging shows DEBUG messages."""
+        # Get all logs (not tail) to ensure we capture the startup banner
+        logs = get_pod_logs({'app': 'clustersecret'}, namespace=CLUSTER_SECRET_NAMESPACE, tail_lines=None)
+
+        # Logs should not be empty
+        self.assertTrue(len(logs) > 0, "Logs should not be empty")
+
+        # Should contain the debug warning banner
+        self.assertIn('DEBUG MODE ON - NOT FOR PRODUCTION', logs,
+                      "Debug warning banner should appear at DEBUG level")
+
+        # Should contain warning about secrets being leaked
+        self.assertIn('secrets are leaked to stdout', logs,
+                      "Secrets leak warning should appear at DEBUG level")
+
+
+class LoggingJsonCases(unittest.TestCase):
+    """Test cases for JSON logging encoder - requires helm upgrade."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Upgrade helm release with JSON logging."""
+        print("\nUpgrading to JSON logging encoder...")
+        result = subprocess.run([
+            'helm', 'upgrade', 'cluster-secret', '../charts/cluster-secret',
+            '-n', 'cluster-secret',
+            '--set', 'image.repository=localhost/cluster-secret',
+            '--set', 'image.tag=e2e-test',
+            '--set', 'logging.encoder=json',
+            '--set', 'logging.level=DEBUG',
+            '--wait', '--timeout=60s'
+        ], capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"Helm upgrade failed: {result.stderr}")
+            raise Exception("Failed to upgrade to JSON logging")
+
+        # Wait for new pod to be ready
+        wait_for_pod_ready_with_events({'app': 'clustersecret'}, namespace=CLUSTER_SECRET_NAMESPACE, timeout_seconds=60)
+        print("JSON logging enabled")
+
+    @classmethod
+    def tearDownClass(cls):
+        """Restore plain logging encoder."""
+        print("\nRestoring plain logging encoder...")
+        subprocess.run([
+            'helm', 'upgrade', 'cluster-secret', '../charts/cluster-secret',
+            '-n', 'cluster-secret',
+            '--set', 'image.repository=localhost/cluster-secret',
+            '--set', 'image.tag=e2e-test',
+            '--set', 'logging.encoder=plain',
+            '--set', 'logging.level=INFO',
+            '--wait', '--timeout=60s'
+        ], capture_output=True, text=True)
+
+    def test_logging_json_format(self):
+        """Test that JSON encoder produces valid JSON log lines."""
+        import json
+
+        logs = get_pod_logs({'app': 'clustersecret'}, namespace=CLUSTER_SECRET_NAMESPACE, tail_lines=100)
+
+        # Logs should not be empty
+        self.assertTrue(len(logs) > 0, "Logs should not be empty")
+
+        # Find JSON log lines (skip any non-JSON startup messages)
+        json_lines = []
+        for line in logs.strip().split('\n'):
+            line = line.strip()
+            if line.startswith('{'):
+                try:
+                    parsed = json.loads(line)
+                    json_lines.append(parsed)
+                except json.JSONDecodeError:
+                    pass
+
+        # Should have at least one valid JSON log line
+        self.assertGreater(len(json_lines), 0, "Should have at least one valid JSON log line")
+
+        # Check JSON structure has expected fields
+        sample_log = json_lines[0]
+        self.assertIn('timestamp', sample_log, "JSON log should have 'timestamp' field")
+        self.assertIn('level', sample_log, "JSON log should have 'level' field")
+        self.assertIn('message', sample_log, "JSON log should have 'message' field")
 
 
 if __name__ == '__main__':

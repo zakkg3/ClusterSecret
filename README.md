@@ -122,6 +122,62 @@ data:
   password: Nzg5MTAxMTIxMgo=
 ```
 
+## Secret Types
+
+By default, ClusterSecret creates secrets with `type: Opaque`. To create other secret types (e.g., `kubernetes.io/dockerconfigjson`, `kubernetes.io/tls`), you must explicitly set the `type` field:
+
+```yaml
+apiVersion: clustersecret.io/v1
+kind: ClusterSecret
+metadata:
+  name: registry-credentials
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: <base64-encoded-docker-config>
+```
+
+**Important notes:**
+- The `type` field is **case-sensitive** - use lowercase `type`, not `Type`
+- When using `valueFrom` to reference a source secret, the type is **not** automatically inherited - you must explicitly set it on the ClusterSecret
+
+### Using valueFrom
+
+You can reference an existing secret instead of embedding data directly:
+
+```yaml
+apiVersion: clustersecret.io/v1
+kind: ClusterSecret
+metadata:
+  name: registry-credentials
+type: kubernetes.io/dockerconfigjson    # Must be set explicitly
+data:
+  valueFrom:
+    secretKeyRef:
+      namespace: source-namespace
+      name: source-secret-name
+      keys:                              # Optional: specify which keys to copy
+        - .dockerconfigjson
+```
+
+## Configuration
+
+### Environment Variables
+
+The operator can be configured via the following environment variables:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `LOG_LEVEL` | Log verbosity: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` | `INFO` |
+| `LOG_ENCODER` | Output format: `plain` or `json` | `plain` |
+| `LOG_FORMAT` | Python format string (only used when `LOG_ENCODER=plain`) | `%(asctime)s - %(name)s - %(levelname)s - %(message)s` |
+| `LOG_INCLUDE_KOPF` | Include Kopf framework logs: `true` or `false` | `false` |
+| `REPLACE_EXISTING` | Replace existing secrets not managed by ClusterSecret: `true` or `false` | `false` |
+| `BLOCKED_LABELS` | Comma-separated list of label prefixes to filter from synced secrets | `app.kubernetes.io` |
+
+**Note:** When `LOG_LEVEL` is set to `DEBUG`, a warning will be logged: "DEBUG logging enabled - ONLY use in NON-PROD, leaks sensitive information"
+
+When using the Helm chart, these can be configured via the `logging` values block. See the [chart README](charts/cluster-secret/README.md) for details.
+
 ## images
 
 Images are built and pushed on tag ('git tag') with GitHub Actions. You can find them here:
