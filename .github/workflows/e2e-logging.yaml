@@ -1,0 +1,83 @@
+name: E2E Logging Tests
+
+on: [pull_request]
+
+jobs:
+  e2e-logging-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        kind-node-images:
+          - kindest/node:v1.31.0@sha256:53df588e04085fd41ae12de0c3fe4c72f7013bba32a20e7325357a1ac94ba865
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.12.1
+
+      - name: Build Docker Image
+        run: docker build -t cluster-secret:${{ github.sha }} .
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.8.0
+        with:
+          node_image: ${{ matrix.kind-node-images }}
+
+      - name: Loading locally build image to kind cluster
+        run: kind load docker-image cluster-secret:${{ github.sha }} --name=chart-testing
+
+      - name: Run helm install with DEBUG logging
+        run: |
+          helm install cluster-secret ./charts/cluster-secret \
+            -n cluster-secret \
+            --create-namespace \
+            --set image.repository=cluster-secret \
+            --set image.tag=${{ github.sha }} \
+            --set logging.level=DEBUG
+
+      - name: Wait for pod to be ready
+        run: |
+          kubectl wait --for=condition=ready pod -l app=clustersecret -n cluster-secret --timeout=60s
+
+      - name: Verify DEBUG logging output
+        run: |
+          echo "Checking pod logs for DEBUG level output..."
+          LOGS=$(kubectl logs -l app=clustersecret -n cluster-secret)
+
+          # Check for DEBUG level messages
+          if echo "$LOGS" | grep -q "DEBUG"; then
+            echo "DEBUG level messages found in logs"
+          else
+            echo "ERROR: No DEBUG level messages found in logs"
+            echo "--- Logs ---"
+            echo "$LOGS"
+            exit 1
+          fi
+
+          # Check for the debug warning banner
+          if echo "$LOGS" | grep -q "DEBUG MODE ON - NOT FOR PRODUCTION"; then
+            echo "Debug warning banner found in logs"
+          else
+            echo "ERROR: Debug warning banner not found in logs"
+            echo "--- Logs ---"
+            echo "$LOGS"
+            exit 1
+          fi
+
+          # Check for secrets leaked warning
+          if echo "$LOGS" | grep -q "secrets are leaked to stdout"; then
+            echo "Secrets leak warning found in logs"
+          else
+            echo "ERROR: Secrets leak warning not found in logs"
+            echo "--- Logs ---"
+            echo "$LOGS"
+            exit 1
+          fi
+
+          echo "All DEBUG logging checks passed!"

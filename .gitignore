@@ -5,3 +5,4 @@ yaml/Object_example/debug-*
 .vscode
 .coverage
 lcov.info
+.venv/
