@@ -1,3 +1,4 @@
+import os
 import unittest
 from kubernetes import client, config
 from kubernetes.client.rest import ApiException
@@ -5,6 +6,10 @@ from kubernetes.client.rest import ApiException
 # Load Kubernetes configuration from the default location or provide your own kubeconfig file path
 import subprocess
 from k8s_utils import wait_for_pod_ready_with_events, get_pod_logs, ClusterSecretManager
+
+# Get chart path relative to this script's location
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+CHART_PATH = os.path.join(SCRIPT_DIR, '..', 'charts', 'cluster-secret')
 
 config.load_kube_config()
 
@@ -50,7 +55,9 @@ class ClusterSecretCases(unittest.TestCase):
 
     def test_running(self):
         pods = api_instance.list_namespaced_pod(namespace=CLUSTER_SECRET_NAMESPACE)
-        self.assertEqual(len(pods.items), 1)
+        # Filter out terminating pods (during rolling updates there may be 2 pods temporarily)
+        running_pods = [p for p in pods.items if p.metadata.deletion_timestamp is None]
+        self.assertEqual(len(running_pods), 1)
 
     def test_logging_info_level(self):
         """Test that INFO level logging is working (default configuration)."""
@@ -350,10 +357,9 @@ class LoggingDebugCases(unittest.TestCase):
         """Upgrade helm release with DEBUG logging."""
         print("\nUpgrading to DEBUG logging level...")
         result = subprocess.run([
-            'helm', 'upgrade', 'cluster-secret', '../charts/cluster-secret',
+            'helm', 'upgrade', 'cluster-secret', CHART_PATH,
             '-n', 'cluster-secret',
-            '--set', 'image.repository=localhost/cluster-secret',
-            '--set', 'image.tag=e2e-test',
+            '--reuse-values',
             '--set', 'logging.level=DEBUG',
             '--wait', '--timeout=60s'
         ], capture_output=True, text=True)
@@ -370,10 +376,9 @@ class LoggingDebugCases(unittest.TestCase):
         """Restore INFO logging level."""
         print("\nRestoring INFO logging level...")
         subprocess.run([
-            'helm', 'upgrade', 'cluster-secret', '../charts/cluster-secret',
+            'helm', 'upgrade', 'cluster-secret', CHART_PATH,
             '-n', 'cluster-secret',
-            '--set', 'image.repository=localhost/cluster-secret',
-            '--set', 'image.tag=e2e-test',
+            '--reuse-values',
             '--set', 'logging.level=INFO',
             '--wait', '--timeout=60s'
         ], capture_output=True, text=True)
@@ -403,10 +408,9 @@ class LoggingJsonCases(unittest.TestCase):
         """Upgrade helm release with JSON logging."""
         print("\nUpgrading to JSON logging encoder...")
         result = subprocess.run([
-            'helm', 'upgrade', 'cluster-secret', '../charts/cluster-secret',
+            'helm', 'upgrade', 'cluster-secret', CHART_PATH,
             '-n', 'cluster-secret',
-            '--set', 'image.repository=localhost/cluster-secret',
-            '--set', 'image.tag=e2e-test',
+            '--reuse-values',
             '--set', 'logging.encoder=json',
             '--set', 'logging.level=DEBUG',
             '--wait', '--timeout=60s'
@@ -424,10 +428,9 @@ class LoggingJsonCases(unittest.TestCase):
         """Restore plain logging encoder."""
         print("\nRestoring plain logging encoder...")
         subprocess.run([
-            'helm', 'upgrade', 'cluster-secret', '../charts/cluster-secret',
+            'helm', 'upgrade', 'cluster-secret', CHART_PATH,
             '-n', 'cluster-secret',
-            '--set', 'image.repository=localhost/cluster-secret',
-            '--set', 'image.tag=e2e-test',
+            '--reuse-values',
             '--set', 'logging.encoder=plain',
             '--set', 'logging.level=INFO',
             '--wait', '--timeout=60s'
@@ -436,8 +439,14 @@ class LoggingJsonCases(unittest.TestCase):
     def test_logging_json_format(self):
         """Test that JSON encoder produces valid JSON log lines."""
         import json
+        import time
 
-        logs = get_pod_logs({'app': 'clustersecret'}, namespace=CLUSTER_SECRET_NAMESPACE, tail_lines=100)
+        # Give the pod time to generate some logs after restart
+        # The pod needs to process existing ClusterSecrets which generates DEBUG logs
+        time.sleep(10)
+
+        # Get all logs (not tail) to ensure we capture startup logs
+        logs = get_pod_logs({'app': 'clustersecret'}, namespace=CLUSTER_SECRET_NAMESPACE, tail_lines=None)
 
         # Logs should not be empty
         self.assertTrue(len(logs) > 0, "Logs should not be empty")
