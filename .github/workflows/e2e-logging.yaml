@@ -45,6 +45,20 @@ jobs:
         run: |
           kubectl wait --for=condition=ready pod -l app=clustersecret -n cluster-secret --timeout=60s
 
+      - name: Wait for logs to be generated
+        run: |
+          echo "Waiting for pod to generate DEBUG logs..."
+          # The pod needs time to start processing and generate DEBUG logs
+          for i in {1..30}; do
+            LOGS=$(kubectl logs -l app=clustersecret -n cluster-secret 2>/dev/null || echo "")
+            if echo "$LOGS" | grep -q "DEBUG MODE ON"; then
+              echo "DEBUG logs detected after $i seconds"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 1
+          done
+
       - name: Verify DEBUG logging output
         run: |
           echo "Checking pod logs for DEBUG level output..."
