@@ -96,12 +96,12 @@ install:
 	helm install clustersecret ./charts/cluster-secret -n clustersecret --create-namespace
 
 start-test-env:
-	uname | grep -q "Darwin" && podman machine start || true
+	podman machine start 
 	KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster
 
 stop-test-env:
 	KIND_EXPERIMENTAL_PROVIDER=podman kind delete cluster
-	uname | grep -q "Darwin" && podman machine stop || true
+	podman machine stop || true
 
 chart-update:
 	# deprecated, see workflows. chart.clustersecret.com from branch gh-pages on /root folder.

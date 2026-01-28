@@ -178,7 +178,39 @@ The operator can be configured via the following environment variables:
 
 When using the Helm chart, these can be configured via the `logging` values block. See the [chart README](charts/cluster-secret/README.md) for details.
 
-## images
+## Development
+
+### Local Testing with Podman
+
+The Makefile uses podman for local builds and testing. On Linux with recent Ubuntu/AppArmor, you may encounter:
+
+```
+cannot clone: Permission denied
+Error: cannot re-exec process
+```
+
+This is caused by AppArmor restricting unprivileged user namespaces. Fix with:
+
+```bash
+sudo sysctl kernel.apparmor_restrict_unprivileged_userns=0
+```
+
+To make it permanent:
+
+```bash
+echo "kernel.apparmor_restrict_unprivileged_userns=0" | sudo tee /etc/sysctl.d/99-podman.conf
+```
+
+### Make Targets
+
+```bash
+make start-test-env  # Create Kind cluster with podman
+make test            # Run unit and helm tests
+make build           # Build container image
+make stop-test-env   # Delete Kind cluster
+```
+
+## Images
 
 Images are built and pushed on tag ('git tag') with GitHub Actions. You can find them here:
 
