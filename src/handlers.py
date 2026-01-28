@@ -8,6 +8,7 @@ from kubernetes import client, config
 from cache import Cache, MemoryCache
 from kubernetes_utils import delete_secret, get_ns_list, sync_secret, patch_clustersecret_status, \
     create_secret_metadata, secret_exists, get_custom_objects_by_kind
+from logging_config import configure_logging
 from models import BaseClusterSecret
 
 # In-memory dictionary for all ClusterSecrets in the Cluster. UID -> ClusterSecret Body
@@ -251,14 +252,8 @@ async def namespace_watcher(logger: logging.Logger, meta: kopf.Meta, **_):
 
 @kopf.on.startup()
 async def startup_fn(logger: logging.Logger, **_):
-    logger.debug(
-        """
-      #########################################################################
-      # DEBUG MODE ON - NOT FOR PRODUCTION                                    #
-      # On this mode secrets are leaked to stdout, this is not safe!. NO-GO ! #
-      #########################################################################
-    """,
-    )
+    # Configure logging from environment variables
+    configure_logging(logger)
 
     cluster_secrets = get_custom_objects_by_kind(
         group='clustersecret.io',

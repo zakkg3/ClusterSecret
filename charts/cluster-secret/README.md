@@ -29,6 +29,21 @@ data:
   tls.key: BASE64
 ```
 
+## Secret Types
+
+To create non-Opaque secrets, explicitly set the `type` field (lowercase, case-sensitive):
+
+```yaml
+apiVersion: clustersecret.io/v1
+kind: ClusterSecret
+metadata:
+  name: registry-credentials
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: <base64-encoded>
+```
+
+When using `valueFrom` to reference a source secret, the type is **not** inherited - you must set it explicitly on the ClusterSecret.
 
 ## Use cases.
 
@@ -67,3 +82,27 @@ For older kubernes (<1.19) use the image tag "0.0.6" in  yaml/02_deployment.yaml
 helm repo add clustersecret https://charts.clustersecret.com/
 helm install clustersecret clustersecret/cluster-secret --version 0.4.3 -n clustersecret --create-namespace
 ```
+
+## Configuration
+
+### Logging
+
+The operator's logging behavior can be configured via the `logging` values:
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `logging.level` | Log verbosity: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` | `INFO` |
+| `logging.encoder` | Output format: `plain` or `json` | `plain` |
+| `logging.format` | Python format string (only used when `encoder` is `plain`) | `%(asctime)s - %(name)s - %(levelname)s - %(message)s` |
+| `logging.includeKopf` | Include Kopf framework logs | `false` |
+
+Example:
+
+```yaml
+logging:
+  level: DEBUG
+  encoder: json
+  includeKopf: true
+```
+
+**Note:** When `LOG_LEVEL` is set to `DEBUG`, a warning will be logged: "DEBUG logging enabled - ONLY use in NON-PROD, leaks sensitive information"

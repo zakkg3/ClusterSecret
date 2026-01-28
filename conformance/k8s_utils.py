@@ -16,6 +16,38 @@ def is_subset(_set: Optional[Mapping[str, str]], _subset: Optional[Mapping[str, 
     return True
 
 
+def get_pod_logs(pod_selector: dict, namespace: str, tail_lines: Optional[int] = 100) -> str:
+    """
+    Get logs from a pod matching the selector.
+
+    Args:
+        pod_selector (dict): A dictionary representing the pod selector (e.g., {"app": "my-app"}).
+        namespace (str): The namespace where the pod is located.
+        tail_lines (int): Number of lines from the end of the logs to retrieve. None for all logs.
+
+    Returns:
+        str: The pod logs.
+    """
+    v1 = client.CoreV1Api()
+    pod_list = v1.list_namespaced_pod(
+        namespace,
+        label_selector=','.join([f"{k}={v}" for k, v in pod_selector.items()])
+    )
+
+    if not pod_list.items:
+        raise Exception(f"No pods found matching selector {pod_selector} in namespace {namespace}")
+
+    # Filter to only Running pods (not Terminating)
+    running_pods = [p for p in pod_list.items if p.status.phase == 'Running' and p.metadata.deletion_timestamp is None]
+    if not running_pods:
+        raise Exception(f"No running pods found matching selector {pod_selector} in namespace {namespace}")
+
+    pod_name = running_pods[0].metadata.name
+    if tail_lines is None:
+        return v1.read_namespaced_pod_log(pod_name, namespace)
+    return v1.read_namespaced_pod_log(pod_name, namespace, tail_lines=tail_lines)
+
+
 def wait_for_pod_ready_with_events(pod_selector: dict, namespace: str, timeout_seconds: int = 300):
     """
     Wait for a pod to be ready in the specified namespace and print all events.
@@ -40,6 +72,10 @@ def wait_for_pod_ready_with_events(pod_selector: dict, namespace: str, timeout_s
         )
 
         for pod in pod_list.items:
+            # Skip pods that are being deleted (terminating)
+            if pod.metadata.deletion_timestamp is not None:
+                continue
+
             pod_name = pod.metadata.name
             print(f"Checking pod {pod_name}...")
 
@@ -49,7 +85,7 @@ def wait_for_pod_ready_with_events(pod_selector: dict, namespace: str, timeout_s
                 print(f"Event: {event.message}")
 
             # Check if the pod is ready
-            if all(status.ready for status in pod.status.container_statuses):
+            if pod.status.container_statuses and all(status.ready for status in pod.status.container_statuses):
                 print(f"Pod {pod_name} is ready!")
                 return
 

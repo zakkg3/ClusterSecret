@@ -3,11 +3,24 @@ image:
   repository: quay.io/clustersecret/clustersecret
   tag: 0.0.14
   # use tag-alt for ARM and other alternative builds - read the readme for more information
+  pullPolicy: IfNotPresent
 
 # If Clustersecret is about to create a secret and then it founds it exists:
 # Default is to ignore it via false setting. (to not loose any unintentional data)
 # It can also be replaced, just set value to true.
 replace_existing: 'false'
+
+# Logging configuration
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: INFO
+  # Log encoder: plain, json
+  encoder: plain
+  # Log format (only used when encoder is 'plain')
+  # Uses Python logging format string syntax
+  format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  # Include Kopf framework logs in configuration
+  includeKopf: false
 
 env:
   - name: BLOCKED_LABELS

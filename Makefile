@@ -3,8 +3,47 @@ IMG_NAME = clustersecret
 IMG_FQNAME = $(IMG_NAMESPACE)/$(IMG_NAME)
 IMG_VERSION = 0.0.13
 
-.PHONY: container push clean 
+.PHONY: container push clean test unit-test helm-test e2e-test e2e-test-full
 all: container
+
+.venv:
+	python3 -m venv .venv
+	. .venv/bin/activate && pip install -r src/requirements.txt pytest
+
+unit-test: .venv
+	. .venv/bin/activate && pytest
+
+helm-test:
+	helm lint ./charts/cluster-secret
+	helm template clustersecret ./charts/cluster-secret | grep -q "LOG_LEVEL"
+	helm template clustersecret ./charts/cluster-secret | grep -q "LOG_ENCODER"
+	helm template clustersecret ./charts/cluster-secret --set logging.level=DEBUG | grep -q "DEBUG"
+	helm template clustersecret ./charts/cluster-secret --set logging.encoder=json | grep -q "json"
+
+e2e-test: .venv
+	# Requires a running kind cluster (make start-test-env)
+	podman build -t localhost/cluster-secret:e2e-test .
+	rm -f /tmp/cluster-secret-e2e.tar
+	podman save localhost/cluster-secret:e2e-test -o /tmp/cluster-secret-e2e.tar
+	KIND_EXPERIMENTAL_PROVIDER=podman kind load image-archive /tmp/cluster-secret-e2e.tar
+	rm -f /tmp/cluster-secret-e2e.tar
+	-kubectl delete secrets --all -n example-1 2>/dev/null
+	-kubectl delete secrets --all -n example-2 2>/dev/null
+	-kubectl delete secrets --all -n example-3 2>/dev/null
+	-kubectl delete clustersecrets --all 2>/dev/null
+	sleep 5
+	helm upgrade --install cluster-secret ./charts/cluster-secret \
+		-n cluster-secret --create-namespace \
+		--set image.repository=localhost/cluster-secret \
+		--set image.tag=e2e-test \
+		--wait --timeout=60s
+	. .venv/bin/activate && pip install -r conformance/requirements.txt && cd conformance && python3 -m unittest tests -v
+
+e2e-test-full:
+	@$(MAKE) start-test-env
+	@$(MAKE) e2e-test; rc=$$?; $(MAKE) stop-test-env; exit $$rc
+
+test: unit-test helm-test
 
 build:
 	uname | grep "Darwin" && podman machine start
@@ -57,12 +96,12 @@ install:
 	helm install clustersecret ./charts/cluster-secret -n clustersecret --create-namespace
 
 start-test-env:
-	podman machine start
+	podman machine start 
 	KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster
 
 stop-test-env:
 	KIND_EXPERIMENTAL_PROVIDER=podman kind delete cluster
-	podman machine stop
+	podman machine stop || true
 
 chart-update:
 	# deprecated, see workflows. chart.clustersecret.com from branch gh-pages on /root folder.
